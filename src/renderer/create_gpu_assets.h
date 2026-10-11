@@ -4,8 +4,7 @@
 #include <vector>
 #include "SDL3/SDL.h"
 #include <string>
-#include "core/Vertex.h"
-#include "core/Matrix4x4.h"
+#include "renderer/Vertex.h"
 
 struct DL_ShaderInfo{
     std::string shaderFilename {};

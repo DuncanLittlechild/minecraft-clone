@@ -4,7 +4,7 @@
 #include <array>
 #include <vector>
 #include "SDL3/SDL_gpu.h"
-#include "core/Vertex.h"
+#include "renderer/Vertex.h"
 
 struct Mesh{    
     std::vector<Vertex> vertices{};

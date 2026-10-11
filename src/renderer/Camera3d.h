@@ -3,8 +3,8 @@
 #include "core/Matrix4x4.h"
 struct Camera3d{
 	static constexpr Vector3 worldUp {0.0f, 1.0f, 0.0f};
-	Vector3 pos{0.0f, 1.0f, 0.0f};
-	Vector3 target{1.0f, 0.0f, 1.0f};
+	Vector3 pos{0.0f, 0.0f, 0.0f};
+	Vector3 target{1.0f, 1.0f, 1.0f};
 	float zRot {};
 
 	double fov {60.0 * SDL_PI_D/180.0};
@@ -36,23 +36,24 @@ struct Camera3d{
 		Vector3 camChangeVec {posChangeVec + xCamMov * xAx + yCamMov * yAx};
 		pos += posChangeVec;
 		target += camChangeVec;
+		UpdateViewMat();
+		UpdateVpMat();
 	}
 
 	void UpdateViewMat()
 	{
 		viewMat = Matrix4x4_CreateViewMatrix(pos, target, worldUp);
-		UpdateVpMat();
 	}
 
 	void UpdateProjMat()
 	{
 		projectionMat = Matrix4x4_CreateProjectionMatrix(fov, aspectRatio, near, far);
-		UpdateVpMat();
 	}
 	void UpdateAspectRatio(double w, double h)
 	{
 		aspectRatio = (double)w/h;
 		UpdateProjMat();
+		UpdateVpMat();
 	}
 	void UpdateVpMat()
 	{

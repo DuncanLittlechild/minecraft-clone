@@ -49,10 +49,11 @@ struct DL_LightingFragPerObject{
 void ResetGlobals()
 {
     g_swapchainTexture = nullptr;
+    g_commandBuffer = nullptr;
     g_drawDataQueueEnd = 0; // No data is erased, but just mark all indices as erasable
 }
 
-bool Renderer::Init(SDL_Window* window)
+bool Renderer::Init(SDL_Window* window, float w, float h)
 {
     g_window = window;
 
@@ -73,6 +74,8 @@ bool Renderer::Init(SDL_Window* window)
     }
 
     g_assetManager.Load(g_renderDevice, g_window);
+
+    g_camera.Init(w, h);
 
     return true;
 }
@@ -119,6 +122,11 @@ void Renderer::DrawSprite(const SpriteRenderData& spriteData)
     g_drawDataQueue[g_drawDataQueueEnd++] = spriteData;
 }
 
+void Renderer::UpdateCamera(float xMov, float zMov, float xCamMov, float yCamMov)
+{
+    g_camera.UpdateCam(xMov, zMov, xCamMov, yCamMov);
+}
+
 // Iterates over draw data queue
 void RenderQueue(SDL_GPURenderPass* renderPass)
 {
@@ -155,9 +163,6 @@ void Renderer::RenderGame(ImGuiContext* context)
         .load_op = SDL_GPU_LOADOP_CLEAR,
         .store_op = SDL_GPU_STOREOP_STORE,
     };
-    /* START RENDER PASS*/\
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(g_commandBuffer, &targetInfo, 1, nullptr);
-    /* BIND PIPELINES AND DRAW */
 
     SDL_GPUDepthStencilTargetInfo depthInfo{
         .texture = g_assetManager.depthTexture,
@@ -165,10 +170,12 @@ void Renderer::RenderGame(ImGuiContext* context)
         .load_op = SDL_GPU_LOADOP_CLEAR,
         .store_op = SDL_GPU_STOREOP_DONT_CARE
     };
+    /* START RENDER PASS*/
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(g_commandBuffer, &targetInfo, 1, &depthInfo);
+    /* BIND PIPELINES AND DRAW */
 
     /* BIND PIPELINES AND DRAW */
     SDL_BindGPUGraphicsPipeline(renderPass, g_assetManager.mainPipeline);
-
 
     DL_VertexPerLoop vertexPerLoopUB{
         .cameraVPMat = g_camera.vpMat,

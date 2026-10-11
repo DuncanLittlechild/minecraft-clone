@@ -18,7 +18,7 @@ enum class RendererSetupResult {
 
 namespace Renderer {
     // Initialises all state held within the renderer, and stores a pointer to the window
-    bool Init(SDL_Window*);
+    bool Init(SDL_Window*, float w, float h);
 
     // Destroys resources owned by the renderer layer
     // note that this does not inclduethe window, which is owned by the main loop
@@ -32,6 +32,8 @@ namespace Renderer {
     RendererSetupResult TryAcquireSwapchain();
     // Adds sprite render data to the renderer queue
     void DrawSprite(const SpriteRenderData&);
+
+    void UpdateCamera(float, float, float, float);
 
     // Sets up the pipelines and renders the sprite queue
     void RenderGame(ImGuiContext*);

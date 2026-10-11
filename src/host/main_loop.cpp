@@ -19,12 +19,13 @@ LOCAL SDL_Window* g_window{nullptr};
 LOCAL Uint64 g_lastTime {0};
 
 LOCAL constexpr int INITIALWIDTH{1280};
-LOCAL constexpr int INTIALHEIGHT{720};
+LOCAL constexpr int INITIALHEIGHT{720};
 
 
 void InitEngineApi()
 {
     g_engineApi.DrawSprite = Renderer::DrawSprite;
+    g_engineApi.UpdateCamera = Renderer::UpdateCamera;
 }
 
 bool InitGameMemory()
@@ -37,7 +38,7 @@ bool InitGameMemory()
 bool InitWindow()
 {
     SDL_SetHint("SDL_RENDER_VSYNC", "1");
-    g_window = SDL_CreateWindow("Low Level Game", INITIALWIDTH, INTIALHEIGHT, SDL_WINDOW_RESIZABLE);
+    g_window = SDL_CreateWindow("Low Level Game", INITIALWIDTH, INITIALHEIGHT, SDL_WINDOW_RESIZABLE);
 
     if(g_window == nullptr) {
         return false;
@@ -66,7 +67,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
     // Multiple possible reasons for this function to fail,
     // so the log is created within the function
-    if(!Renderer::Init(g_window))
+    if(!Renderer::Init(g_window, INITIALWIDTH, INITIALHEIGHT))
     {
         return SDL_APP_FAILURE;
     }
@@ -92,8 +93,9 @@ SDL_AppResult SDL_AppIterate(void* appstate){
     // RTry to acquire the swapchain
     // If it can't be acquired, nothing will be renderered, and theres no point in 
     // pushing sprite data to the queue
-    RendererSetupResult rendererSetup {Renderer::TryAcquireSwapchain()};
     bool skipRender{false};
+
+    RendererSetupResult rendererSetup {Renderer::TryAcquireSwapchain()};
     switch(rendererSetup){
         case(RendererSetupResult::FAILURE):{
             return SDL_APP_FAILURE;
@@ -105,12 +107,11 @@ SDL_AppResult SDL_AppIterate(void* appstate){
             skipRender = true;
         } break;
     };
-    GameUpdateFn(g_gameMemory, g_engineApi, g_userInput, deltaTime, skipRender);
 
+    GameUpdateFn(g_gameMemory, g_engineApi, g_userInput, deltaTime, skipRender);
     if(!skipRender)
-    {
         Renderer::RenderGame(g_gameMemory.imGuiContext);
-    }
+
     return SDL_APP_CONTINUE;
 }
 
