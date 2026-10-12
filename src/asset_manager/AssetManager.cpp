@@ -1,7 +1,9 @@
 #include "AssetManager.h"
 #include <array>
 #include "SDL3/SDL_gpu.h"
-#include "renderer/create_gpu_assets.h"
+#include "SDL3/SDL_surface.h"
+#include "asset_manager/create_gpu_assets.h"
+#include "asset_manager/stb_utils.h"
 
 bool GPUMesh::UploadToGPU(SDL_GPUDevice* device, const Mesh& mesh)
 {
@@ -95,7 +97,6 @@ bool GPUMesh::UploadToGPU(SDL_GPUDevice* device, const Mesh& mesh)
     return true;    
 }
 
-
 void AssetManager::Load(SDL_GPUDevice* device, SDL_Window* window)
 {
     Mesh tmpMesh {
@@ -112,10 +113,15 @@ void AssetManager::Load(SDL_GPUDevice* device, SDL_Window* window)
         .shaderFilename = "Lighting.frag",
     };
 
-    CreatePipeline(&mainPipeline, device, window, vertexShaderInfo, fragmentShaderInfo);
-
+    GPU_Create::Pipeline(&mainPipeline, device, window, vertexShaderInfo, fragmentShaderInfo);
 
     RecreateDepthTexture(device, window);
+
+    SDL_Surface* textureAtlasSurface{STB_Utils::LoadImage(RESOURCES_PATH "atlas.png", 4)};
+
+    GPU_Create::Texture(device, textureAtlasSurface, &textureAtlas);
+
+    GPU_Create::Sampler(&sampler, device);
 }
 
 void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* window)
@@ -126,5 +132,5 @@ void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* windo
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
 
-    CreateDepthTexture(device, &depthTexture, w, h);
+    GPU_Create::DepthTexture(device, &depthTexture, w, h);
 }

@@ -9,6 +9,7 @@
 #include <array>
 #include "asset_manager/AssetManager.h"
 #include "renderer/Camera3d.h"
+#include "renderer/Vertex.h"
 
 // Exist from init to quit
 LOCAL SDL_GPUDevice* g_renderDevice{nullptr};
@@ -24,6 +25,8 @@ std::size_t g_drawDataQueueEnd{0};
 
 LOCAL Uint32 g_w{};
 LOCAL Uint32 g_h{};
+
+constexpr float BLOCKINC {16.f/256.f};
 
 struct DL_VertexPerLoop{
     Matrix4x4 cameraVPMat{};
@@ -45,6 +48,14 @@ struct DL_LightingFragPerObject{
     Vector3 specularColour{};
     float shinyness{};
 };
+
+LOCAL void GetTextureCoordinates(const std::pair<int, int>& coordIndex, TexRect& dst)
+{
+    dst.u0 = coordIndex.first * BLOCKINC;
+    dst.v0 = coordIndex.second * BLOCKINC;
+    dst.u1 = (coordIndex.first + 1) * BLOCKINC;
+    dst.v0 = (coordIndex.second + 1) * BLOCKINC;
+}
 
 void ResetGlobals()
 {
@@ -130,22 +141,21 @@ void Renderer::UpdateCamera(float xMov, float zMov, float xCamMov, float yCamMov
 // Iterates over draw data queue
 void RenderQueue(SDL_GPURenderPass* renderPass)
 {
-    // Everythings a cube, so only need to push gpu mesh atm
-    std::array cubeVertexBuffers {
-        SDL_GPUBufferBinding{
-            .buffer = g_assetManager.cubeMesh.vertices,
-            .offset = 0
-        }
-    };
-    SDL_GPUBufferBinding cubeIndexBuffer {
-        .buffer = g_assetManager.cubeMesh.indices,
-        .offset = 0
-    };
-    SDL_BindGPUVertexBuffers(renderPass, 0, cubeVertexBuffers.data(), cubeVertexBuffers.size());
-    SDL_BindGPUIndexBuffer(renderPass, &cubeIndexBuffer, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-
     for (auto i {0uz}; i < g_drawDataQueueEnd; ++i)
     {
+        // Everythings a cube, so only need to push gpu mesh atm
+        std::array cubeVertexBuffers {
+            SDL_GPUBufferBinding{
+                .buffer = g_assetManager.cubeMesh.vertices,
+                .offset = 0
+            }
+        };
+        SDL_GPUBufferBinding cubeIndexBuffer {
+            .buffer = g_assetManager.cubeMesh.indices,
+            .offset = 0
+        };
+        SDL_BindGPUVertexBuffers(renderPass, 0, cubeVertexBuffers.data(), cubeVertexBuffers.size());
+        SDL_BindGPUIndexBuffer(renderPass, &cubeIndexBuffer, SDL_GPU_INDEXELEMENTSIZE_16BIT);
         SpriteRenderData& spr {g_drawDataQueue[i]};
         Matrix4x4 movMat {Matrix4x4_CreateTranslation(spr.x, spr.y, spr.z)};
         SDL_PushGPUVertexUniformData(g_commandBuffer, 0, &movMat, sizeof(Matrix4x4));
@@ -181,6 +191,12 @@ void Renderer::RenderGame(ImGuiContext* context)
         .cameraVPMat = g_camera.vpMat,
     };
     SDL_PushGPUVertexUniformData(g_commandBuffer, 1, &vertexPerLoopUB, sizeof(DL_VertexPerLoop));
+
+    SDL_GPUTextureSamplerBinding samplerBinding {
+        .texture = g_assetManager.textureAtlas,
+        .sampler = g_assetManager.sampler
+    };
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &samplerBinding, 1);
 
     RenderQueue(renderPass);
 

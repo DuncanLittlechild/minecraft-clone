@@ -77,6 +77,7 @@ struct AssetManager {
     SDL_GPUTexture* textureAtlas{nullptr};
     SDL_GPUTexture* depthTexture {nullptr};
     SDL_GPUGraphicsPipeline* mainPipeline{nullptr};
+    SDL_GPUSampler* sampler {nullptr};
 
     void Load(SDL_GPUDevice*, SDL_Window*);
     void RecreateDepthTexture(SDL_GPUDevice*, SDL_Window*);

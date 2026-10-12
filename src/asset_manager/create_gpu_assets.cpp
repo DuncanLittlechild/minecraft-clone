@@ -1,9 +1,12 @@
 #include "create_gpu_assets.h"
 #include "SDL3/SDL_gpu.h"
+#include "SDL3/SDL_surface.h"
 #include <filesystem>
+#include "core/global_consts.h"
 
+// This entire file is mostly functions which are currently just run at startup.
 
-SDL_GPUShader* LoadShader(SDL_GPUDevice* device, const DL_ShaderInfo& dlShaderInfo)
+LOCAL SDL_GPUShader* LoadShader(SDL_GPUDevice* device, const DL_ShaderInfo& dlShaderInfo)
 {
     SDL_GPUShaderStage stage;
     if(dlShaderInfo.shaderFilename.contains(".vert"))
@@ -84,17 +87,155 @@ SDL_GPUShader* LoadShader(SDL_GPUDevice* device, const DL_ShaderInfo& dlShaderIn
     return shader;
 }
 
-bool CreateGPUVertexBuffer(SDL_GPUDevice* device, const std::vector<Vertex>& vertices, SDL_GPUBuffer** buffer)
+template <typename T>
+LOCAL bool CreateGPUBuffer(SDL_GPUDevice* device, std::span<const T> vertices, SDL_GPUBufferUsageFlags usage, SDL_GPUBuffer** buffer, Uint32* indexCount = nullptr)
+{
+    Uint32 verticesSize = sizeof(T) * vertices.size();
+
+    SDL_GPUBufferCreateInfo vertexCreateInfo {
+        .usage = usage,
+        .size = verticesSize,
+    };
+
+    *buffer = SDL_CreateGPUBuffer(device,&vertexCreateInfo);
+    if(*buffer == nullptr)
+    {
+        SDL_Log("Couldn't create buffer");
+        return false;   
+    }
+
+    SDL_GPUTransferBufferCreateInfo transferBufferCreateInfo {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = verticesSize
+    };
+
+    SDL_GPUTransferBuffer* transferBuffer{
+        SDL_CreateGPUTransferBuffer(device, &transferBufferCreateInfo)
+    };
+
+    if(transferBuffer == nullptr)
+    {
+        SDL_Log("Couldn't create transfer buffer");
+        return false;
+    }
+
+    // transfer info into the transfer buffer
+    void* vertexTransferPtr1{SDL_MapGPUTransferBuffer(device, transferBuffer, false)};
+    SDL_memcpy(vertexTransferPtr1, vertices.data(), verticesSize);
+    SDL_UnmapGPUTransferBuffer(device, transferBuffer);
+
+    SDL_GPUCommandBuffer* uploadCommandBuff {
+        SDL_AcquireGPUCommandBuffer(device)
+    };
+    if (uploadCommandBuff == nullptr)
+    {
+        SDL_Log("Couldn't acquire GPU command buffer: %s", SDL_GetError());
+        return false;
+    }
+
+    SDL_GPUCopyPass* copyPass {SDL_BeginGPUCopyPass(uploadCommandBuff)};
+
+    SDL_GPUTransferBufferLocation bufferLocation {
+        .transfer_buffer = transferBuffer,
+        .offset = 0
+    };
+
+    SDL_GPUBufferRegion bufferRegion {
+        .buffer = *buffer,
+        .offset = 0,
+        .size = verticesSize
+    };
+
+    SDL_UploadToGPUBuffer(copyPass, &bufferLocation, &bufferRegion, true);
+
+    SDL_EndGPUCopyPass(copyPass);
+    if(!SDL_SubmitGPUCommandBuffer(uploadCommandBuff))
+    {
+        SDL_Log("Couldn't submit GPU command buffer: %s", SDL_GetError());
+        return false;
+    }
+
+    SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
+
+    if(usage == SDL_GPU_BUFFERUSAGE_INDEX)
+    {
+        if(indexCount != nullptr)
+        {
+            *indexCount = vertices.size();
+        }
+        else 
+        {
+            SDL_Log("Index count must not be null when creating index buffer");
+            return false;
+        }
+    }
+
+    return true;        
+}
+
+bool GPU_Create::Texture(SDL_GPUDevice* device, SDL_Surface* src, SDL_GPUTexture** dst)
+{
+    // Create empty texture of the right size
+    SDL_GPUTextureCreateInfo textureInfo {
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+        .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
+        .width = (Uint32)src->w,
+        .height = (Uint32)src->h,
+        .layer_count_or_depth = 1,
+        .num_levels = 1
+    };
+    *dst = SDL_CreateGPUTexture(device, &textureInfo);
+
+    // Setup transfer buffer
+    Uint32 imageSize = src->w * src->h * 4;
+    SDL_GPUTransferBufferCreateInfo tBuffCreateInfo {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = imageSize
+    };
+    SDL_GPUTransferBuffer* textureTransferBuffer {SDL_CreateGPUTransferBuffer(device, &tBuffCreateInfo)};
+
+    // Map transfer buffer and transfer pixel data into it
+    Uint8* pixelTransfer {static_cast<Uint8*>(SDL_MapGPUTransferBuffer(device, textureTransferBuffer, false))};
+    SDL_memcpy(pixelTransfer, src->pixels, imageSize);
+    SDL_UnmapGPUTransferBuffer(device, textureTransferBuffer);
+
+    // Begin copy pass
+    SDL_GPUCommandBuffer* cmdBuff {SDL_AcquireGPUCommandBuffer(device)};
+    SDL_GPUCopyPass* copyPass {SDL_BeginGPUCopyPass(cmdBuff)};
+
+    SDL_GPUTextureTransferInfo transferBufferLocation{
+        .transfer_buffer = textureTransferBuffer,
+        .offset = 0,
+    };
+
+    SDL_GPUTextureRegion textureDestination {
+        .texture = *dst,
+        .w = (Uint32)src->w,
+        .h = (Uint32)src->h,
+        .d = 1
+    };
+
+    SDL_UploadToGPUTexture(copyPass, &transferBufferLocation, &textureDestination, false);
+
+    SDL_EndGPUCopyPass(copyPass);
+    SDL_SubmitGPUCommandBuffer(cmdBuff);
+    SDL_ReleaseGPUTransferBuffer(device, textureTransferBuffer);
+
+    return true;
+}
+
+bool GPU_Create::VertexBuffer(SDL_GPUDevice* device, const std::vector<Vertex>& vertices, SDL_GPUBuffer** buffer)
 {
     return CreateGPUBuffer(device, std::span<const Vertex>(vertices), SDL_GPU_BUFFERUSAGE_VERTEX, buffer);
 }
 
-bool CreateGPUIndexBuffer(SDL_GPUDevice* device, const std::vector<uint16_t>& vertices, SDL_GPUBuffer** buffer, Uint32& indexCount)
+bool GPU_Create::IndexBuffer(SDL_GPUDevice* device, const std::vector<uint16_t>& vertices, SDL_GPUBuffer** buffer, Uint32& indexCount)
 {
     return CreateGPUBuffer(device, std::span<const uint16_t>(vertices), SDL_GPU_BUFFERUSAGE_INDEX, buffer, &indexCount);
 }
 
-bool CreateDepthTexture(SDL_GPUDevice* device, SDL_GPUTexture** depthTexture, int w, int h)
+bool GPU_Create::DepthTexture(SDL_GPUDevice* device, SDL_GPUTexture** depthTexture, int w, int h)
 {
     SDL_GPUTextureCreateInfo createInfo {
         .type = SDL_GPU_TEXTURETYPE_2D,
@@ -110,7 +251,7 @@ bool CreateDepthTexture(SDL_GPUDevice* device, SDL_GPUTexture** depthTexture, in
     return true;
 }
 
-bool CreateGPUSampler(SDL_GPUSampler** sampler, SDL_GPUDevice* device)
+bool GPU_Create::Sampler(SDL_GPUSampler** sampler, SDL_GPUDevice* device)
 {
     SDL_GPUSamplerCreateInfo pointClamp {
         .min_filter = SDL_GPU_FILTER_NEAREST,
@@ -125,7 +266,7 @@ bool CreateGPUSampler(SDL_GPUSampler** sampler, SDL_GPUDevice* device)
     return true;
 }
 
-bool CreatePipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, SDL_Window* window, DL_ShaderInfo& vertexShaderInfo, DL_ShaderInfo& fragmentShaderInfo)
+bool GPU_Create::Pipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, SDL_Window* window, DL_ShaderInfo& vertexShaderInfo, DL_ShaderInfo& fragmentShaderInfo)
 {
     SDL_GPUShader* vertexColourShader {LoadShader(device, vertexShaderInfo)};
     if(vertexColourShader == nullptr)
@@ -153,15 +294,13 @@ bool CreatePipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, S
             .pitch = sizeof(Vertex),
             .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
             .instance_step_rate = 0
-        }
-        /*
+        },
         SDL_GPUVertexBufferDescription {
             .slot = 1,
             .pitch = sizeof(TexRect),
             .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
             .instance_step_rate = 0
         }
-        */
     };
 
     std::array vertexAttributes {
@@ -176,15 +315,13 @@ bool CreatePipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, S
             .buffer_slot = 0,
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
             .offset = sizeof(float) * 3
-        }
-        /*
+        },
         SDL_GPUVertexAttribute{
             .location = 2,
             .buffer_slot = 1,
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
             .offset = sizeof(float) * 6
         }
-            */
     };
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo {
@@ -198,9 +335,9 @@ bool CreatePipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, S
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
         .rasterizer_state = {
-            .fill_mode = SDL_GPU_FILLMODE_FILL,/*
+            .fill_mode = SDL_GPU_FILLMODE_FILL,
             .cull_mode = SDL_GPU_CULLMODE_BACK,
-            .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,*/
+            .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
         },
         .depth_stencil_state = {
             .compare_op = SDL_GPU_COMPAREOP_LESS,
