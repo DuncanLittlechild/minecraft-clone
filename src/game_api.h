@@ -4,11 +4,17 @@
 #include <cstddef>
 #include <cstdint>
 
+namespace BlockType{
+    enum Type : uint8_t {
+        DIRT,
+        TYPE_COUNT
+    };
+}
+
 struct SpriteRenderData {
     float x{.0f}, y{.0f}, z{.0f}; // Position
     float scale{.0f}; // size relative to the basic mesh size
-    int u0{0}, v0{0}; // texture position
-    uint8_t textureHandle{0};
+    uint8_t atlasHandle{0};
     uint8_t colourHandle{0};
     uint8_t layer{0};
 };

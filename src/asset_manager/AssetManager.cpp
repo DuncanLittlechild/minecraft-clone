@@ -1,10 +1,11 @@
 #include "AssetManager.h"
 #include <array>
 #include "SDL3/SDL_gpu.h"
+#include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "asset_manager/create_gpu_assets.h"
 #include "asset_manager/stb_utils.h"
-
+#include "renderer/Vertex.h"
 bool GPUMesh::UploadToGPU(SDL_GPUDevice* device, const Mesh& mesh)
 {
     indexCount = mesh.indices.size();
@@ -105,23 +106,15 @@ void AssetManager::Load(SDL_GPUDevice* device, SDL_Window* window)
     };
     cubeMesh.UploadToGPU(device, tmpMesh);
 
-    DL_ShaderInfo vertexShaderInfo {
-        .shaderFilename = "CameraPosition.vert",
-        .numUniformBuffers = 2,
-    };
-    DL_ShaderInfo fragmentShaderInfo {
-        .shaderFilename = "Lighting.frag",
-    };
-
-    GPU_Create::Pipeline(&mainPipeline, device, window, vertexShaderInfo, fragmentShaderInfo);
+    GPU_Create::BlockPipeline(&mainPipeline, device, window);
 
     RecreateDepthTexture(device, window);
 
-    SDL_Surface* textureAtlasSurface{STB_Utils::LoadImage(RESOURCES_PATH "atlas.png", 4)};
-
-    GPU_Create::Texture(device, textureAtlasSurface, &textureAtlas);
+    GPU_Create::TextureArray(device, &textureArray);
 
     GPU_Create::Sampler(&sampler, device);
+
+    //GPU_Create::InstanceBufferAndTransferBuffer(device, &instanceBuffer, &instanceTransferBuffer);
 }
 
 void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* window)
@@ -134,3 +127,60 @@ void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* windo
 
     GPU_Create::DepthTexture(device, &depthTexture, w, h);
 }
+/*
+void AssetManager::UploadToInstanceBuffer(SDL_GPUDevice* device, Uint32 size, InstanceData* data, Uint32 dataCount)
+{
+    std::size_t dataSize{dataCount * sizeof(InstanceData)};
+    // transfer info into the transfer buffer
+    void* vertexTransferPtr1{SDL_MapGPUTransferBuffer(device, instanceTransferBuffer, false)};
+    SDL_memcpy(vertexTransferPtr1, data, dataSize);
+    SDL_UnmapGPUTransferBuffer(device, instanceTransferBuffer);
+
+    SDL_GPUCommandBuffer* uploadCommandBuff {
+        SDL_AcquireGPUCommandBuffer(device)
+    };
+    if (uploadCommandBuff == nullptr)
+    {
+        SDL_Log("Couldn't acquire GPU command buffer: %s", SDL_GetError());
+        return false;
+    }
+
+    SDL_GPUCopyPass* copyPass {SDL_BeginGPUCopyPass(uploadCommandBuff)};
+
+    SDL_GPUTransferBufferLocation bufferLocation {
+        .transfer_buffer = transferBuffer,
+        .offset = 0
+    };
+
+    SDL_GPUBufferRegion bufferRegion {
+        .buffer = *buffer,
+        .offset = 0,
+        .size = verticesSize
+    };
+
+    SDL_UploadToGPUBuffer(copyPass, &bufferLocation, &bufferRegion, true);
+
+    SDL_EndGPUCopyPass(copyPass);
+    if(!SDL_SubmitGPUCommandBuffer(uploadCommandBuff))
+    {
+        SDL_Log("Couldn't submit GPU command buffer: %s", SDL_GetError());
+        return false;
+    }
+
+    SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
+
+    if(usage == SDL_GPU_BUFFERUSAGE_INDEX)
+    {
+        if(indexCount != nullptr)
+        {
+            *indexCount = vertices.size();
+        }
+        else 
+        {
+            SDL_Log("Index count must not be null when creating index buffer");
+            return false;
+        }
+    }
+
+    return true;        
+}*/

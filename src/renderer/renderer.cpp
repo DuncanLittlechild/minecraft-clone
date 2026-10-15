@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_gpu.h"
+#include "SDL3/SDL_hints.h"
 #include "core/Matrix4x4.h"
 #include "core/global_consts.h"
 #include "game_api.h"
@@ -26,8 +27,6 @@ std::size_t g_drawDataQueueEnd{0};
 LOCAL Uint32 g_w{};
 LOCAL Uint32 g_h{};
 
-constexpr float BLOCKINC {16.f/256.f};
-
 struct DL_VertexPerLoop{
     Matrix4x4 cameraVPMat{};
 };
@@ -49,14 +48,6 @@ struct DL_LightingFragPerObject{
     float shinyness{};
 };
 
-LOCAL void GetTextureCoordinates(const std::pair<int, int>& coordIndex, TexRect& dst)
-{
-    dst.u0 = coordIndex.first * BLOCKINC;
-    dst.v0 = coordIndex.second * BLOCKINC;
-    dst.u1 = (coordIndex.first + 1) * BLOCKINC;
-    dst.v0 = (coordIndex.second + 1) * BLOCKINC;
-}
-
 void ResetGlobals()
 {
     g_swapchainTexture = nullptr;
@@ -70,6 +61,8 @@ bool Renderer::Init(SDL_Window* window, float w, float h)
 
     // Set flags for the shader formats which this program can use
     SDL_GPUShaderFormat gpuFlags {SDL_GPU_SHADERFORMAT_SPIRV|SDL_GPU_SHADERFORMAT_DXIL|SDL_GPU_SHADERFORMAT_MSL};
+
+    //SDL_SetHint(SDL_HINT_GPU_DRIVER, "vulkan");
 
     // Create a truct which interfaces with a GPU device which meets the criteria establishefd in the flags
     g_renderDevice = SDL_CreateGPUDevice(gpuFlags, true, NULL);
@@ -159,6 +152,7 @@ void RenderQueue(SDL_GPURenderPass* renderPass)
         SpriteRenderData& spr {g_drawDataQueue[i]};
         Matrix4x4 movMat {Matrix4x4_CreateTranslation(spr.x, spr.y, spr.z)};
         SDL_PushGPUVertexUniformData(g_commandBuffer, 0, &movMat, sizeof(Matrix4x4));
+        SDL_PushGPUVertexUniformData(g_commandBuffer, 2, &spr.atlasHandle, sizeof(spr.atlasHandle));
         SDL_DrawGPUIndexedPrimitives(renderPass, g_assetManager.cubeMesh.indexCount, 1, 0, 0, 0);
     }
 }
@@ -193,7 +187,7 @@ void Renderer::RenderGame(ImGuiContext* context)
     SDL_PushGPUVertexUniformData(g_commandBuffer, 1, &vertexPerLoopUB, sizeof(DL_VertexPerLoop));
 
     SDL_GPUTextureSamplerBinding samplerBinding {
-        .texture = g_assetManager.textureAtlas,
+        .texture = g_assetManager.textureArray,
         .sampler = g_assetManager.sampler
     };
     SDL_BindGPUFragmentSamplers(renderPass, 0, &samplerBinding, 1);

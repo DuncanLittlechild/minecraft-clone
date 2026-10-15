@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include "SDL3/SDL_gpu.h"
+#include "game_api.h"
 #include "renderer/Vertex.h"
 
 struct Mesh{    
@@ -21,40 +22,40 @@ struct GPUMesh{
 
 constexpr std::array<Vertex, 24> cubeColourVertices {{
     // Front (+Z) - red
-    {-0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f},
-    { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f},
-    { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f},
-    {-0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f},
+    {-0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f},
+    { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f},
+    { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f},
+    {-0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f},
 
     // Back (-Z) - green
-    { 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f},
-    {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f},
-    {-0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f},
-    { 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f},
+    { 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f},
+    {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f},
+    {-0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f},
+    { 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f},
 
     // Left (-X) - blue
-    {-0.5f, -0.5f,  0.5f, -1.0f, 0.0f, 0.0f},
-    {-0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f},
-    {-0.5f,  0.5f, -0.5f, -1.0f, 0.0f, 0.0f},
-    {-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f},
+    {-0.5f, -0.5f,  0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f},
+    {-0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
+    {-0.5f,  0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f},
+    {-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f},
 
     // Right (+X) - yellow
-    { 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f},
-    { 0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f},
-    { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f},
-    { 0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f},
+    { 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f},
+    { 0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
+    { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f},
+    { 0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f},
 
     // Bottom (-Y) - magenta
-    {-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f},
-    { 0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f},
-    { 0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f},
-    {-0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f},
+    {-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f},
+    { 0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f},
+    { 0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f},
+    {-0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f},
 
     // Top (+Y) - cyan
-    {-0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 0.0f},
-    { 0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 0.0f},
-    { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f},
-    {-0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f},
+    {-0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},
+    { 0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},
+    { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f},
+    {-0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f},
 }};
 
 constexpr std::array<uint16_t, 36> cubeIndices {{
@@ -74,13 +75,18 @@ struct Material{
 
 struct AssetManager {
     GPUMesh cubeMesh{};
-    SDL_GPUTexture* textureAtlas{nullptr};
+    SDL_GPUTexture* textureArray{nullptr};
     SDL_GPUTexture* depthTexture {nullptr};
     SDL_GPUGraphicsPipeline* mainPipeline{nullptr};
     SDL_GPUSampler* sampler {nullptr};
 
+    // Not currently needed
+    SDL_GPUBuffer* instanceBuffer{nullptr};
+    SDL_GPUTransferBuffer* instanceTransferBuffer{nullptr};
+
     void Load(SDL_GPUDevice*, SDL_Window*);
     void RecreateDepthTexture(SDL_GPUDevice*, SDL_Window*);
+    //void UploadToInstanceBuffer();
 };
 
 

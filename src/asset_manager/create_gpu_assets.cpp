@@ -1,10 +1,24 @@
 #include "create_gpu_assets.h"
+#include "SDL3/SDL_error.h"
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_surface.h"
+#include <cstdio>
 #include <filesystem>
 #include "core/global_consts.h"
+#include "game_api.h"
+#include "asset_manager/stb_utils.h"
+#include "renderer/Vertex.h"
 
 // This entire file is mostly functions which are currently just run at startup.
+
+constexpr std::array<const char*, BlockType::TYPE_COUNT>
+TEXTUREFILENAMES {{
+    "dirt.png"
+}};
+
+constexpr Uint32 BLOCKPIXELSIZE {16};
+constexpr Uint32 MAXBLOCKINSTANCES{100'000};
+
 
 LOCAL SDL_GPUShader* LoadShader(SDL_GPUDevice* device, const DL_ShaderInfo& dlShaderInfo)
 {
@@ -87,6 +101,8 @@ LOCAL SDL_GPUShader* LoadShader(SDL_GPUDevice* device, const DL_ShaderInfo& dlSh
     return shader;
 }
 
+// Actually creates and uploads to GPU buffer
+// Need to correct this, as these two steps do not need to be attached
 template <typename T>
 LOCAL bool CreateGPUBuffer(SDL_GPUDevice* device, std::span<const T> vertices, SDL_GPUBufferUsageFlags usage, SDL_GPUBuffer** buffer, Uint32* indexCount = nullptr)
 {
@@ -225,6 +241,63 @@ bool GPU_Create::Texture(SDL_GPUDevice* device, SDL_Surface* src, SDL_GPUTexture
     return true;
 }
 
+bool GPU_Create::TextureArray(SDL_GPUDevice* device, SDL_GPUTexture** dst)
+{
+    // Create empty texture of the right size
+    SDL_GPUTextureCreateInfo textureInfo {
+        .type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
+        .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+        .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
+        .width = BLOCKPIXELSIZE,
+        .height = BLOCKPIXELSIZE,
+        .layer_count_or_depth = BlockType::TYPE_COUNT,
+        .num_levels = 1,
+    };
+    *dst = SDL_CreateGPUTexture(device, &textureInfo);
+    
+    // Setup transfer buffer
+    Uint32 imageSize = BLOCKPIXELSIZE * BLOCKPIXELSIZE * 4;
+    SDL_GPUTransferBufferCreateInfo tBuffCreateInfo {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = imageSize
+    };
+    SDL_GPUTransferBuffer* textureTransferBuffer {SDL_CreateGPUTransferBuffer(device, &tBuffCreateInfo)};
+
+    // Begin copy pass
+    SDL_GPUCommandBuffer* cmdBuff {SDL_AcquireGPUCommandBuffer(device)};
+    SDL_GPUCopyPass* copyPass {SDL_BeginGPUCopyPass(cmdBuff)};
+    for(auto i {0uz}; i < BlockType::TYPE_COUNT; ++i)
+    {
+        SDL_Surface* surface {STB_Utils::LoadImage(RESOURCES_PATH "dirt.png", 4)};
+        // Map transfer buffer and transfer pixel data into it
+        Uint8* pixelTransfer {static_cast<Uint8*>(SDL_MapGPUTransferBuffer(device, textureTransferBuffer, true))};
+        SDL_memcpy(pixelTransfer, surface->pixels, imageSize);
+        SDL_UnmapGPUTransferBuffer(device, textureTransferBuffer);
+
+        SDL_GPUTextureTransferInfo transferBufferLocation{
+            .transfer_buffer = textureTransferBuffer,
+            .offset = 0,
+        };
+
+        SDL_GPUTextureRegion textureDestination {
+            .texture = *dst,
+            .layer = static_cast<Uint32>(i),
+            .w = BLOCKPIXELSIZE,
+            .h = BLOCKPIXELSIZE,
+            .d = 1,
+        };
+
+        SDL_UploadToGPUTexture(copyPass, &transferBufferLocation, &textureDestination, true);
+        SDL_DestroySurface(surface);
+    }
+    
+    SDL_EndGPUCopyPass(copyPass);
+    SDL_SubmitGPUCommandBuffer(cmdBuff);
+    SDL_ReleaseGPUTransferBuffer(device, textureTransferBuffer);
+
+    return true;
+}
+
 bool GPU_Create::VertexBuffer(SDL_GPUDevice* device, const std::vector<Vertex>& vertices, SDL_GPUBuffer** buffer)
 {
     return CreateGPUBuffer(device, std::span<const Vertex>(vertices), SDL_GPU_BUFFERUSAGE_VERTEX, buffer);
@@ -253,6 +326,8 @@ bool GPU_Create::DepthTexture(SDL_GPUDevice* device, SDL_GPUTexture** depthTextu
 
 bool GPU_Create::Sampler(SDL_GPUSampler** sampler, SDL_GPUDevice* device)
 {
+    // if a coordinate is off the edge of a texture, this sampler ensures that its values
+    // are clamped to the nearest value on the texture.
     SDL_GPUSamplerCreateInfo pointClamp {
         .min_filter = SDL_GPU_FILTER_NEAREST,
         .mag_filter = SDL_GPU_FILTER_NEAREST,
@@ -266,8 +341,17 @@ bool GPU_Create::Sampler(SDL_GPUSampler** sampler, SDL_GPUDevice* device)
     return true;
 }
 
-bool GPU_Create::Pipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, SDL_Window* window, DL_ShaderInfo& vertexShaderInfo, DL_ShaderInfo& fragmentShaderInfo)
+bool GPU_Create::BlockPipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, SDL_Window* window)
 {
+    //
+    DL_ShaderInfo vertexShaderInfo {
+        .shaderFilename = "CameraPosition.vert",
+        .numUniformBuffers = 3,
+    };
+    DL_ShaderInfo fragmentShaderInfo {
+        .shaderFilename = "Lighting.frag",
+        .numSamplers = 1
+    };
     SDL_GPUShader* vertexColourShader {LoadShader(device, vertexShaderInfo)};
     if(vertexColourShader == nullptr)
     {
@@ -288,22 +372,27 @@ bool GPU_Create::Pipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* dev
         }
     };
 
+    // Descriptions of the buffers which will be uploaded to the GPU as part of the rendering process
     std::array vertexBufferDescriptions {
         SDL_GPUVertexBufferDescription {
             .slot = 0,
             .pitch = sizeof(Vertex),
-            .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+            //  the rate at which the buffer is iterated through when being used in the shader.
+            // This means that the buffer is iterated over at a rate of one per vertex - this
+            // is the default for setting one thing for vertex, and is bare minimum needed for position
+            .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX, 
             .instance_step_rate = 0
-        },
+        },/*
         SDL_GPUVertexBufferDescription {
             .slot = 1,
-            .pitch = sizeof(TexRect),
-            .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+            .pitch = sizeof(InstanceData),
+            .input_rate = SDL_GPU_VERTEXINPUTRATE_INSTANCE,
             .instance_step_rate = 0
-        }
+        }*/
     };
 
     std::array vertexAttributes {
+        // Vertex elements
         SDL_GPUVertexAttribute{
             .location = 0,
             .buffer_slot = 0,
@@ -318,10 +407,23 @@ bool GPU_Create::Pipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* dev
         },
         SDL_GPUVertexAttribute{
             .location = 2,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
             .offset = sizeof(float) * 6
-        }
+        },/*
+        // InstanceData elements
+        SDL_GPUVertexAttribute{
+            .location = 3,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = sizeof(float) * 8
+        },
+        SDL_GPUVertexAttribute{
+            .location = 4,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_INT,
+            .offset = sizeof(float) * 11
+        }*/
     };
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo {
@@ -333,18 +435,25 @@ bool GPU_Create::Pipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* dev
             .vertex_attributes = vertexAttributes.data(),
             .num_vertex_attributes = vertexAttributes.size()
         },
+        // What type of primitives are being drawn. This current one is
+        // a list of separate triangles. 
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
         .rasterizer_state = {
+            // Filled in or drawn as lines (wireframe)
             .fill_mode = SDL_GPU_FILLMODE_FILL,
+            // Which side is culled, if any. Defaults to none
             .cull_mode = SDL_GPU_CULLMODE_BACK,
             .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
         },
         .depth_stencil_state = {
+            // Checks to see if something has a lower depth value, and keeps that.
             .compare_op = SDL_GPU_COMPAREOP_LESS,
             .enable_depth_test = true,
             .enable_depth_write = true,
             .enable_stencil_test = false
         },
+        // The 'target' is the texture which will be written to and then blitted to the screen.
+        // Generally dictated by the swapchain available
         .target_info = {
             .color_target_descriptions = colourTargetDescriptions.data(),
             .num_color_targets = colourTargetDescriptions.size(),
@@ -355,8 +464,45 @@ bool GPU_Create::Pipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* dev
 
     *pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
 
+    if (*pipeline == nullptr)
+    {
+        printf("%s\n", SDL_GetError());
+    }
+
     SDL_ReleaseGPUShader(device, vertexColourShader);
     SDL_ReleaseGPUShader(device, basicFragShader);
 
     return true;
 }
+/*
+// Buffer to hold the data of each instance as it is being created.
+bool GPU_Create::InstanceBufferAndTransferBuffer(SDL_GPUDevice* device, SDL_GPUBuffer** buffer, SDL_GPUTransferBuffer** tBuffer)
+{
+    Uint32 iDataSize {sizeof(InstanceData) * MAXBLOCKINSTANCES};
+    SDL_GPUBufferCreateInfo vertexCreateInfo {
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = iDataSize,
+    };
+
+    *buffer = SDL_CreateGPUBuffer(device,&vertexCreateInfo);
+    if(*buffer == nullptr)
+    {
+        SDL_Log("Couldn't create buffer");
+        return false;   
+    }
+
+    SDL_GPUTransferBufferCreateInfo transferBufferCreateInfo {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = iDataSize
+    };
+
+    *tBuffer = SDL_CreateGPUTransferBuffer(device, &transferBufferCreateInfo);
+
+    if(*tBuffer == nullptr)
+    {
+        SDL_Log("Couldn't create transfer buffer");
+        return false;
+    }
+
+    return true;
+}*/

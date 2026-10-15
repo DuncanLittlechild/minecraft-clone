@@ -3,11 +3,12 @@
 struct Vertex {
     float x, y, z;
     float nX, nY, nZ;
+    float u, v;
 };
-
-struct TexRect {
-    float u0, v0;
-    float u1, v1;
-};
+/*
+struct InstanceData {
+    float x{.0f}, y{.0f}, z{.0f};
+    int texIndex{0};
+};*/
 
 #endif

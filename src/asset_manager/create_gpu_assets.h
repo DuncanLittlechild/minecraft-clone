@@ -2,9 +2,12 @@
 #define DL_CHESS_CREATE_GPU_ASSETS_H
 #include <span>
 #include <vector>
+#include <array>
 #include "SDL3/SDL.h"
 #include <string>
+#include "SDL3/SDL_gpu.h"
 #include "renderer/Vertex.h"
+#include "game_api.h"
 
 struct DL_ShaderInfo{
     std::string shaderFilename {};
@@ -14,8 +17,12 @@ struct DL_ShaderInfo{
     Uint32 numUniformBuffers{};
 };
 
+// Creates specifc assets needed for the renderer to function, and to be held on the asset manager
+// None of these are generic functions despite their names.
 namespace GPU_Create {
     bool Texture(SDL_GPUDevice*, SDL_Surface* src, SDL_GPUTexture**dst);
+
+    bool TextureArray(SDL_GPUDevice*, SDL_GPUTexture**);
 
     bool VertexBuffer(SDL_GPUDevice* device, const std::vector<Vertex>& vertices, SDL_GPUBuffer** buffer);
 
@@ -25,7 +32,9 @@ namespace GPU_Create {
 
     bool Sampler(SDL_GPUSampler** sampler, SDL_GPUDevice* device);
 
-    bool Pipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, SDL_Window* window, DL_ShaderInfo& vertexShaderInfo, DL_ShaderInfo& fragmentShaderInfo);
+    bool BlockPipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice* device, SDL_Window* window);
+
+    bool InstanceBufferAndTransferBuffer(SDL_GPUDevice*, SDL_GPUBuffer**, SDL_GPUTransferBuffer**);
 }
 
 #endif

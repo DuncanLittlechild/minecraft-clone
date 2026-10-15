@@ -60,7 +60,7 @@ void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float de
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     ProcessInput(input, data->player, deltaTime, api);
-    Block initBlock {Block::DIRT, 1.0f, 1.0f, 1.0f};
+    Block initBlock {BlockType::DIRT, 1.0f, 1.0f, 1.0f};
     api.DrawSprite(initBlock.ToRenderData());
     memory.imGuiContext = Imgui_Frontend::Draw();
 }

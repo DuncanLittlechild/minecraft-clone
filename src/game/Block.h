@@ -8,10 +8,7 @@ struct Block {
     // Enums must match the texture atlas. 
     // If you count up to the number the enum represents from left to right on the atlas,
     // wrapping at the end of lines, you should get the correct texture.
-    enum Type : int {
-        DIRT,
-        TYPE_COUNT
-    } type{};
+    BlockType::Type type{};
 
     float x, y, z;
 };
