@@ -2,6 +2,7 @@
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_hints.h"
+#include "asset_manager/meshes.h"
 #include "core/Matrix4x4.h"
 #include "core/global_consts.h"
 #include "game_api.h"
@@ -10,7 +11,6 @@
 #include <array>
 #include "asset_manager/AssetManager.h"
 #include "renderer/Camera3d.h"
-#include "renderer/Vertex.h"
 
 // Exist from init to quit
 LOCAL SDL_GPUDevice* g_renderDevice{nullptr};
@@ -21,11 +21,22 @@ LOCAL Camera3d g_camera{};
 // Refreshed every frame
 LOCAL SDL_GPUCommandBuffer* g_commandBuffer{nullptr};
 LOCAL SDL_GPUTexture* g_swapchainTexture{nullptr};
-LOCAL std::array<SpriteRenderData, 1024> g_drawDataQueue{};
+LOCAL std::array<int, 1024> g_drawDataQueue{};
 std::size_t g_drawDataQueueEnd{0};
 
 LOCAL Uint32 g_w{};
 LOCAL Uint32 g_h{};
+
+LOCAL GPUMesh g_CubeMesh {};
+
+void CreateCubeMesh()
+{
+    Mesh cMesh {
+        .vertices {CUBEVERTICES.begin(), CUBEVERTICES.end()},
+        .indices {CUBEINDICES.begin(), CUBEINDICES.end()}
+    };
+    g_CubeMesh.UploadToGPU(g_renderDevice, cMesh);
+}
 
 struct DL_VertexPerLoop{
     Matrix4x4 cameraVPMat{};
@@ -62,7 +73,7 @@ bool Renderer::Init(SDL_Window* window, float w, float h)
     // Set flags for the shader formats which this program can use
     SDL_GPUShaderFormat gpuFlags {SDL_GPU_SHADERFORMAT_SPIRV|SDL_GPU_SHADERFORMAT_DXIL|SDL_GPU_SHADERFORMAT_MSL};
 
-    //SDL_SetHint(SDL_HINT_GPU_DRIVER, "vulkan");
+    SDL_SetHint(SDL_HINT_GPU_DRIVER, "vulkan");
 
     // Create a truct which interfaces with a GPU device which meets the criteria establishefd in the flags
     g_renderDevice = SDL_CreateGPUDevice(gpuFlags, true, NULL);
@@ -121,9 +132,9 @@ RendererSetupResult Renderer::TryAcquireSwapchain()
         return RendererSetupResult::SWAPCHAIN_ACQUIRED;
 }
 
-void Renderer::DrawSprite(const SpriteRenderData& spriteData)
+void Renderer::DrawChunk(int handle)
 {
-    g_drawDataQueue[g_drawDataQueueEnd++] = spriteData;
+    g_drawDataQueue[g_drawDataQueueEnd++] = handle;
 }
 
 void Renderer::UpdateCamera(float xMov, float zMov, float xCamMov, float yCamMov)
@@ -139,21 +150,17 @@ void RenderQueue(SDL_GPURenderPass* renderPass)
         // Everythings a cube, so only need to push gpu mesh atm
         std::array cubeVertexBuffers {
             SDL_GPUBufferBinding{
-                .buffer = g_assetManager.cubeMesh.vertices,
+                .buffer = g_assetManager.chunks[i].vertices,
                 .offset = 0
             }
         };
         SDL_GPUBufferBinding cubeIndexBuffer {
-            .buffer = g_assetManager.cubeMesh.indices,
+            .buffer = g_assetManager.chunks[i].indices,
             .offset = 0
         };
         SDL_BindGPUVertexBuffers(renderPass, 0, cubeVertexBuffers.data(), cubeVertexBuffers.size());
-        SDL_BindGPUIndexBuffer(renderPass, &cubeIndexBuffer, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SpriteRenderData& spr {g_drawDataQueue[i]};
-        Matrix4x4 movMat {Matrix4x4_CreateTranslation(spr.x, spr.y, spr.z)};
-        SDL_PushGPUVertexUniformData(g_commandBuffer, 0, &movMat, sizeof(Matrix4x4));
-        SDL_PushGPUVertexUniformData(g_commandBuffer, 2, &spr.atlasHandle, sizeof(spr.atlasHandle));
-        SDL_DrawGPUIndexedPrimitives(renderPass, g_assetManager.cubeMesh.indexCount, 1, 0, 0, 0);
+        SDL_BindGPUIndexBuffer(renderPass, &cubeIndexBuffer, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+        SDL_DrawGPUIndexedPrimitives(renderPass, g_assetManager.chunks[i].indexCount, 1, 0, 0, 0);
     }
 }
 
@@ -163,7 +170,7 @@ void Renderer::RenderGame(ImGuiContext* context)
     /* PREPARE INFO STRUCTS*/
     SDL_GPUColorTargetInfo targetInfo {
         .texture = g_swapchainTexture,
-        .clear_color = SDL_FColor{0.0f, 0.0f, 0.0f, 1.0f},
+        .clear_color = SDL_FColor{.0f, .0f, .0f, 1.0f},
         .load_op = SDL_GPU_LOADOP_CLEAR,
         .store_op = SDL_GPU_STOREOP_STORE,
     };
@@ -184,7 +191,7 @@ void Renderer::RenderGame(ImGuiContext* context)
     DL_VertexPerLoop vertexPerLoopUB{
         .cameraVPMat = g_camera.vpMat,
     };
-    SDL_PushGPUVertexUniformData(g_commandBuffer, 1, &vertexPerLoopUB, sizeof(DL_VertexPerLoop));
+    SDL_PushGPUVertexUniformData(g_commandBuffer, 0, &vertexPerLoopUB, sizeof(DL_VertexPerLoop));
 
     SDL_GPUTextureSamplerBinding samplerBinding {
         .texture = g_assetManager.textureArray,
@@ -203,3 +210,8 @@ void Renderer::RenderGame(ImGuiContext* context)
 
 
 SDL_GPUDevice* Renderer::GetGPURenderingDevice() { return g_renderDevice; }
+
+int Renderer::GetChunkHandle(BlockType::Type blocks[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH], int cX, int cY)
+{
+    return g_assetManager.CreateGPUChunk(g_renderDevice, blocks, cX, cY);
+}

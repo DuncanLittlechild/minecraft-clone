@@ -11,14 +11,14 @@ struct main0_out
 struct main0_in
 {
     float2 in_var_TEXCOORD0 [[user(locn0)]];
-    float in_var_TEXCOORD1 [[user(locn1)]];
+    int in_var_TEXCOORD1 [[user(locn1)]];
 };
 
 fragment main0_out main0(main0_in in [[stage_in]], texture2d_array<float> TextureArray [[texture(0)]], sampler Sampler [[sampler(0)]])
 {
     main0_out out = {};
-    float3 _28 = float3(in.in_var_TEXCOORD0, in.in_var_TEXCOORD1);
-    out.out_var_SV_Target0 = TextureArray.sample(Sampler, _28.xy, uint(rint(_28.z)));
+    float3 _30 = float3(in.in_var_TEXCOORD0, float(in.in_var_TEXCOORD1));
+    out.out_var_SV_Target0 = TextureArray.sample(Sampler, _30.xy, uint(rint(_30.z)));
     return out;
 }
 

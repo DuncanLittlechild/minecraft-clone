@@ -24,8 +24,9 @@ LOCAL constexpr int INITIALHEIGHT{720};
 
 void InitEngineApi()
 {
-    g_engineApi.DrawSprite = Renderer::DrawSprite;
     g_engineApi.UpdateCamera = Renderer::UpdateCamera;
+    g_engineApi.GetChunkHandle = Renderer::GetChunkHandle;
+    g_engineApi.DrawChunk = Renderer::DrawChunk;
 }
 
 bool InitGameMemory()

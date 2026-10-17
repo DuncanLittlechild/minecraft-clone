@@ -1,7 +1,8 @@
 #include "GameData.h"
 #include "game_api.h"
 #include "imgui/dl_imgui_frontend.h"
-#include "game/Block.h"
+#include "game/GameChunk.h"
+#include <vector>
 
 std::size_t GetGameDataSizeFn() { return sizeof(GameData); }
 
@@ -60,7 +61,13 @@ void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float de
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     ProcessInput(input, data->player, deltaTime, api);
-    Block initBlock {BlockType::DIRT, 1.0f, 1.0f, 1.0f};
-    api.DrawSprite(initBlock.ToRenderData());
+    static GameChunk initChunk{};
+    initChunk.Init(0,0);
+    initChunk.handle = api.GetChunkHandle(initChunk.blocks, initChunk.x, initChunk.y);
+    api.DrawChunk(initChunk.handle);
     memory.imGuiContext = Imgui_Frontend::Draw();
+    /*
+    api.DrawSprite(initBlock.ToRenderData());
+    api.DrawSprite(initBlock2.ToRenderData());
+    */
 }

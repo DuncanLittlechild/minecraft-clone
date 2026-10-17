@@ -10,7 +10,8 @@ struct Block {
     // wrapping at the end of lines, you should get the correct texture.
     BlockType::Type type{};
 
-    float x, y, z;
+    // Block coordinates within its chunk
+    int x, y, z;
 };
 
 #endif

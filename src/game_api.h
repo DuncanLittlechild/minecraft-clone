@@ -1,20 +1,29 @@
 #ifndef DL_TEMPLATE_GAMEAPI_H
 #define DL_TEMPLATE_GAMEAPI_H
+#include "core/global_consts.h"
 #include "imgui_internal.h"
 #include <cstddef>
 #include <cstdint>
 
 namespace BlockType{
-    enum Type : uint8_t {
+    enum Type : uint32_t {
         DIRT,
-        TYPE_COUNT
+        SAND,
+        STONE,
+        TYPE_COUNT,
+        MIN_TYPE = 0,
+        NOBLOCK
     };
 }
 
 struct SpriteRenderData {
+    enum Type {
+        BLOCK,
+        CHUNK
+    } type{};
     float x{.0f}, y{.0f}, z{.0f}; // Position
     float scale{.0f}; // size relative to the basic mesh size
-    uint8_t atlasHandle{0};
+    uint32_t atlasHandle{0};
     uint8_t colourHandle{0};
     uint8_t layer{0};
 };
@@ -46,8 +55,9 @@ struct UserInput {
 };
 
 struct EngineApi {
-    void (*DrawSprite)(const SpriteRenderData&);
     void (*UpdateCamera)(float, float, float, float);
+    int (*GetChunkHandle)(BlockType::Type[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH], int, int);
+    void (*DrawChunk)(int);
 };
 
 struct GameMemory {

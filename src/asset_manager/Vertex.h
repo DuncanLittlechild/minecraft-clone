@@ -1,9 +1,13 @@
 #ifndef DL_TEMPLATE_POINT_H
 #define DL_TEMPLATE_POINT_H
 struct Vertex {
+    // Position
     float x, y, z;
+    // normal
     float nX, nY, nZ;
+    // Texture coordinates and layer
     float u, v;
+    int d;
 };
 /*
 struct InstanceData {

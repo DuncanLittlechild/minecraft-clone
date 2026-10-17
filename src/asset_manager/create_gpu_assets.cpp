@@ -1,19 +1,22 @@
 #include "create_gpu_assets.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_gpu.h"
+#include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include <cstdio>
 #include <filesystem>
 #include "core/global_consts.h"
 #include "game_api.h"
 #include "asset_manager/stb_utils.h"
-#include "renderer/Vertex.h"
+#include "asset_manager/Vertex.h"
 
 // This entire file is mostly functions which are currently just run at startup.
 
 constexpr std::array<const char*, BlockType::TYPE_COUNT>
 TEXTUREFILENAMES {{
-    "dirt.png"
+    RESOURCES_PATH "dirt.png",
+    RESOURCES_PATH "sand.png",
+    RESOURCES_PATH "stone.png"
 }};
 
 constexpr Uint32 BLOCKPIXELSIZE {16};
@@ -259,24 +262,27 @@ bool GPU_Create::TextureArray(SDL_GPUDevice* device, SDL_GPUTexture** dst)
     Uint32 imageSize = BLOCKPIXELSIZE * BLOCKPIXELSIZE * 4;
     SDL_GPUTransferBufferCreateInfo tBuffCreateInfo {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = imageSize
+        .size = imageSize * BlockType::TYPE_COUNT
     };
     SDL_GPUTransferBuffer* textureTransferBuffer {SDL_CreateGPUTransferBuffer(device, &tBuffCreateInfo)};
+    Uint8* pixelTransfer {static_cast<Uint8*>(SDL_MapGPUTransferBuffer(device, textureTransferBuffer, true))};
+
+    for(auto i {0uz}; i < BlockType::TYPE_COUNT; ++i)
+    {
+        SDL_Surface* surface {STB_Utils::LoadImage(TEXTUREFILENAMES[i], 4)};
+        SDL_memcpy(pixelTransfer + i * imageSize, surface->pixels, imageSize);
+        SDL_DestroySurface(surface);
+    }
+    SDL_UnmapGPUTransferBuffer(device, textureTransferBuffer);
 
     // Begin copy pass
     SDL_GPUCommandBuffer* cmdBuff {SDL_AcquireGPUCommandBuffer(device)};
     SDL_GPUCopyPass* copyPass {SDL_BeginGPUCopyPass(cmdBuff)};
     for(auto i {0uz}; i < BlockType::TYPE_COUNT; ++i)
-    {
-        SDL_Surface* surface {STB_Utils::LoadImage(RESOURCES_PATH "dirt.png", 4)};
-        // Map transfer buffer and transfer pixel data into it
-        Uint8* pixelTransfer {static_cast<Uint8*>(SDL_MapGPUTransferBuffer(device, textureTransferBuffer, true))};
-        SDL_memcpy(pixelTransfer, surface->pixels, imageSize);
-        SDL_UnmapGPUTransferBuffer(device, textureTransferBuffer);
-
+    {   
         SDL_GPUTextureTransferInfo transferBufferLocation{
             .transfer_buffer = textureTransferBuffer,
-            .offset = 0,
+            .offset = static_cast<Uint32>(i * imageSize),
         };
 
         SDL_GPUTextureRegion textureDestination {
@@ -287,8 +293,7 @@ bool GPU_Create::TextureArray(SDL_GPUDevice* device, SDL_GPUTexture** dst)
             .d = 1,
         };
 
-        SDL_UploadToGPUTexture(copyPass, &transferBufferLocation, &textureDestination, true);
-        SDL_DestroySurface(surface);
+        SDL_UploadToGPUTexture(copyPass, &transferBufferLocation, &textureDestination, false);
     }
     
     SDL_EndGPUCopyPass(copyPass);
@@ -303,9 +308,9 @@ bool GPU_Create::VertexBuffer(SDL_GPUDevice* device, const std::vector<Vertex>& 
     return CreateGPUBuffer(device, std::span<const Vertex>(vertices), SDL_GPU_BUFFERUSAGE_VERTEX, buffer);
 }
 
-bool GPU_Create::IndexBuffer(SDL_GPUDevice* device, const std::vector<uint16_t>& vertices, SDL_GPUBuffer** buffer, Uint32& indexCount)
+bool GPU_Create::IndexBuffer(SDL_GPUDevice* device, const std::vector<uint32_t>& vertices, SDL_GPUBuffer** buffer, Uint32& indexCount)
 {
-    return CreateGPUBuffer(device, std::span<const uint16_t>(vertices), SDL_GPU_BUFFERUSAGE_INDEX, buffer, &indexCount);
+    return CreateGPUBuffer(device, std::span<const uint32_t>(vertices), SDL_GPU_BUFFERUSAGE_INDEX, buffer, &indexCount);
 }
 
 bool GPU_Create::DepthTexture(SDL_GPUDevice* device, SDL_GPUTexture** depthTexture, int w, int h)
@@ -346,7 +351,7 @@ bool GPU_Create::BlockPipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice
     //
     DL_ShaderInfo vertexShaderInfo {
         .shaderFilename = "CameraPosition.vert",
-        .numUniformBuffers = 3,
+        .numUniformBuffers = 1,
     };
     DL_ShaderInfo fragmentShaderInfo {
         .shaderFilename = "Lighting.frag",
@@ -410,7 +415,14 @@ bool GPU_Create::BlockPipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice
             .buffer_slot = 0,
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
             .offset = sizeof(float) * 6
-        },/*
+        },
+        SDL_GPUVertexAttribute{
+            .location = 3,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_INT,
+            .offset = sizeof(float) * 8
+        },
+        /*
         // InstanceData elements
         SDL_GPUVertexAttribute{
             .location = 3,

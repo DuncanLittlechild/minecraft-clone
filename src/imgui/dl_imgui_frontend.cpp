@@ -1,4 +1,5 @@
 #include "dl_imgui_frontend.h"
+#include "game_api.h"
 #include "imgui.h"
 
 void HelpMarker(const char* desc)

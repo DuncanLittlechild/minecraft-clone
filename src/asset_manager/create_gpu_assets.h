@@ -6,7 +6,7 @@
 #include "SDL3/SDL.h"
 #include <string>
 #include "SDL3/SDL_gpu.h"
-#include "renderer/Vertex.h"
+#include "asset_manager/Vertex.h"
 #include "game_api.h"
 
 struct DL_ShaderInfo{
@@ -26,7 +26,7 @@ namespace GPU_Create {
 
     bool VertexBuffer(SDL_GPUDevice* device, const std::vector<Vertex>& vertices, SDL_GPUBuffer** buffer);
 
-    bool IndexBuffer(SDL_GPUDevice* device, const std::vector<uint16_t>& vertices, SDL_GPUBuffer** buffer, Uint32& indexCount);
+    bool IndexBuffer(SDL_GPUDevice* device, const std::vector<uint32_t>& vertices, SDL_GPUBuffer** buffer, Uint32& indexCount);
 
     bool DepthTexture(SDL_GPUDevice* device, SDL_GPUTexture** depthTexture, int w, int h);
 

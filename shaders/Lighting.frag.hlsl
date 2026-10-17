@@ -4,10 +4,7 @@ SamplerState Sampler : register(s0, space2);
 struct Input
 {
     float2 textureCoords : TEXCOORD0;
-    float tIndex : TEXCOORD1;
-    float3 norms : TEXCOORD2;
-
-    //float tIndex : TEXCOORD2;
+    nointerpolation int tIndex : TEXCOORD1;
 };
 
 float4 main (Input input) : SV_Target0

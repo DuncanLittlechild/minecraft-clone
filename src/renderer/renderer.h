@@ -31,7 +31,7 @@ namespace Renderer {
     // window resize
     RendererSetupResult TryAcquireSwapchain();
     // Adds sprite render data to the renderer queue
-    void DrawSprite(const SpriteRenderData&);
+    void DrawChunk(int);
 
     void UpdateCamera(float, float, float, float);
 
@@ -39,6 +39,8 @@ namespace Renderer {
     void RenderGame(ImGuiContext*);
 
     SDL_GPUDevice* GetGPURenderingDevice();
+
+    int GetChunkHandle(BlockType::Type[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH], int, int);
 }
 
 #endif
