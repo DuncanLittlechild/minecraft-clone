@@ -3,6 +3,7 @@
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_gpu.h"
 #include "imgui_internal.h"
+#include "renderer/Camera3d.h"
 namespace Imgui_Backend{
     void Init(SDL_GPUDevice*, SDL_Window*);
 
@@ -10,7 +11,7 @@ namespace Imgui_Backend{
 
     void SetupFrame();
 
-    void Prepare(SDL_GPUCommandBuffer*, ImGuiContext*);
+    void Prepare(SDL_GPUCommandBuffer*, ImGuiContext*, Camera3d&);
 
     void Render(SDL_GPUCommandBuffer*, SDL_GPURenderPass*);
 

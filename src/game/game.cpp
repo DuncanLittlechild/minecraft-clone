@@ -48,10 +48,7 @@ void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& 
     }
     if(input.keys || input.mouse & UserInput::MOUSE_MOVED)
     {
-        player.x += xMov;
-        player.z += zMov;
-        player.xT += xCamMov;
-        player.yT += yCamMov;
+        player.Update(xMov, zMov, xCamMov, yCamMov);
         api.UpdateCamera(xMov, zMov, xCamMov, yCamMov);
     }
 }
@@ -62,7 +59,7 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
     
     if (input.mouse & UserInput::LEFT_CLICK)
     {
-        std::optional<Vector3> targetBlock{GetCoordinatesOfFirstBlockInRange(world, player, 1.0f)};
+        std::optional<Vector3> targetBlock{GetCoordinatesOfFirstBlockInRangeSafe(world, player, 10.0f)};
         if(targetBlock)
         {
             world.DestroyBlockUnsafe(targetBlock.value());
@@ -86,6 +83,7 @@ void GameInitFn(GameMemory& memory, EngineApi& api)
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     new (data) GameData{};
+    data->player.Init();
     data->world.CreateChunk(0, 0, api);
 }
 
@@ -96,5 +94,5 @@ void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float de
     
     if(!skipRender)
         RenderGame(data->world, api);
-    memory.imGuiContext = Imgui_Frontend::Draw();
+    memory.imGuiContext = Imgui_Frontend::Draw(data->player);
 }

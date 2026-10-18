@@ -156,7 +156,7 @@ void RenderQueue(SDL_GPURenderPass* renderPass)
 
 void Renderer::RenderGame(ImGuiContext* context)
 {
-    Imgui_Backend::Prepare(g_commandBuffer, context);
+    Imgui_Backend::Prepare(g_commandBuffer, context, g_camera);
     /* PREPARE INFO STRUCTS*/
     SDL_GPUColorTargetInfo targetInfo {
         .texture = g_swapchainTexture,

@@ -18,11 +18,12 @@ struct World {
 
     void MarkChunkDirty(GameChunk&);
 
+    void DestroyBlockSafe(const Vector3&);
     void DestroyBlockUnsafe(const Vector3&);
 
     void CreateChunk(int, int, EngineApi&);
 
-    bool HasDirtyChunks() {return dirtyChunks.size(); }
+    bool HasDirtyChunks() { return dirtyChunks.size() != 0; }
     void ClearDirtyChunks() { dirtyChunks.resize(0); }
 };
 

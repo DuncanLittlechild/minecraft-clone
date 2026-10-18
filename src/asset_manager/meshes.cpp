@@ -97,10 +97,12 @@ void GPUMesh::Clear(SDL_GPUDevice* device)
     if(vertices != nullptr)
     {
         SDL_ReleaseGPUBuffer(device, vertices);
+        vertices = nullptr;
     }
     if(indices != nullptr)
     {
         SDL_ReleaseGPUBuffer(device, indices);
+        indices = nullptr;
     }
     indexCount = 0;
 }

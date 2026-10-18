@@ -14,13 +14,15 @@ void HelpMarker(const char* desc)
     }
 }
 
-ImGuiContext* Imgui_Frontend::Draw() {
+ImGuiContext* Imgui_Frontend::Draw(Player& player) {
     ImGui::NewFrame();
     ImGuiIO& io {ImGui::GetIO()};
-    ImGui::Begin("Tab");
+    ImGui::Begin("Player stats");
+    ImGui::Text("Position - x:%f, y:%f, z:%f", player.pos.x, player.pos.y, player.pos.z);
+    ImGui::Text("Target - x:%f, y:%f, z:%f", player.target.x, player.target.y, player.target.z);
     ImGui::End();
 
-    ImGui::Render();
+    //ImGui::Render();
 
     return ImGui::GetCurrentContext();
 }

@@ -1,5 +1,7 @@
 #include "World.h"
 #include "GameChunk.h"
+#include "core/Matrix4x4.h"
+#include "game_api.h"
 // When anded with a world coordinate, this returns the index of the
 // chunk which contains said coordinate
 LOCAL constexpr int CHUNKPOSMASK {~0b1111};
@@ -47,6 +49,18 @@ BlockType::Type& World::GetBlockUnsafe(const Vector3& coord)
 void World::MarkChunkDirty(GameChunk& chunk)
 {
     dirtyChunks.push_back(&chunk);
+}
+
+void World::DestroyBlockSafe(const Vector3& block)
+{
+    GameChunk* hostChunk{GetChunkSafe(block)};
+    if(hostChunk == nullptr)
+        return;
+    BlockType::Type* bType {GetBlockSafe(block)};
+    if(bType == nullptr)
+        return;
+    *bType = BlockType::NOBLOCK;
+    MarkChunkDirty(*hostChunk);
 }
 
 void World::DestroyBlockUnsafe(const Vector3& block)

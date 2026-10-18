@@ -16,12 +16,12 @@ struct Ray {
         , dir {g_end - g_start}
         , pos{origin}
     {
-        Vector3_Normalize(dir);
+        dir = Vector3_Normalize(dir);
     }
 
     void Move(const float);
 };
 
-std::optional<Vector3> GetCoordinatesOfFirstBlockInRange(World&,Player&,float);
+std::optional<Vector3> GetCoordinatesOfFirstBlockInRangeSafe(World&,Player&,float);
 
 #endif // DL_SDL3GPU_PROJECT_TEMPLATE_RAYCASTING_H

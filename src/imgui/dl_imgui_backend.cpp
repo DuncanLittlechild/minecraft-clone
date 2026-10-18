@@ -1,4 +1,5 @@
 #include "dl_imgui_backend.h"
+#include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlgpu3.h"
 #include "core/global_consts.h"
@@ -47,9 +48,14 @@ void Imgui_Backend::SetupFrame()
     ImGui_ImplSDL3_NewFrame();
 }
 
-void Imgui_Backend::Prepare(SDL_GPUCommandBuffer* commandBuffer, ImGuiContext* context)
+void Imgui_Backend::Prepare(SDL_GPUCommandBuffer* commandBuffer, ImGuiContext* context, Camera3d& player)
 {
     ImGui::SetCurrentContext(context);
+    ImGui::Begin("Camera Stats");
+    ImGui::Text("Position - x:%f, y:%f, z:%f", player.pos.x, player.pos.y, player.pos.z);
+    ImGui::Text("Target - x:%f, y:%f, z:%f", player.target.x, player.target.y, player.target.z);
+    ImGui::End();
+    ImGui::Render();
     g_drawData = ImGui::GetDrawData();
     ImGui_ImplSDLGPU3_PrepareDrawData(g_drawData, commandBuffer);
 }
