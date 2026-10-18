@@ -9,20 +9,13 @@ void GameChunk::Init(int cX, int cY)
     handle = 0;
     x = cX;
     y = cY;
-    for (int x {0}; x < CHUNKWIDTH; ++x)
+    for (int x {0}; x < CHUNKX; ++x)
     {
-        for (int y {0}; y < CHUNKHEIGHT; ++y)
+        for (int y {0}; y < CHUNKY; ++y)
         {
-            for (int z {0}; z < CHUNKDEPTH; ++z)
+            for (int z {0}; z < CHUNKZ; ++z)
             {
-                if(z == 0)
-                {
-                    blocks[x][y][z] = BlockType::DIRT;
-                }
-                else
-                {
-                    blocks[x][y][z] = BlockType::NOBLOCK;
-                }
+                blocks[x][y][z] = BlockType::DIRT;
             }
         }
     }

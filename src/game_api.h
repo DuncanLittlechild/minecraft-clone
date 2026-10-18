@@ -56,7 +56,7 @@ struct UserInput {
 
 struct EngineApi {
     void (*UpdateCamera)(float, float, float, float);
-    int (*GetChunkHandle)(BlockType::Type[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH], int, int);
+    int (*GetChunkHandle)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
     void (*DrawChunk)(int);
 };
 
@@ -68,6 +68,7 @@ struct GameMemory {
 };
 
 // Both of these are located in game/game.cpp
+void GameInitFn(EngineApi& api);
 void GameUpdateFn(GameMemory&, EngineApi&, UserInput&, float deltaTime, bool skipRender); 
 std::size_t GetGameDataSizeFn();
 

@@ -1,9 +1,7 @@
 #ifndef DL_TEMPLATE_MESHES_H
 #define DL_TEMPLATE_MESHES_H
 #include "SDL3/SDL.h"
-#include <array>
 #include <unordered_map>
-#include <vector>
 #include "SDL3/SDL_gpu.h"
 #include "game_api.h"
 #include "asset_manager/meshes.h"
@@ -31,9 +29,8 @@ struct AssetManager {
 
     void Load(SDL_GPUDevice*, SDL_Window*);
     void RecreateDepthTexture(SDL_GPUDevice*, SDL_Window*);
-    int CreateGPUChunk(SDL_GPUDevice*,BlockType::Type[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH], int, int);
+    int CreateGPUChunk(SDL_GPUDevice*,BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
     //void UploadToInstanceBuffer();
 };
-
 
 #endif

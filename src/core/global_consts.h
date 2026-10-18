@@ -10,9 +10,9 @@
 #define SHARED static
 #define STATIC static
 
-constexpr uint8_t CHUNKHEIGHT {16};
-constexpr uint8_t CHUNKWIDTH {16};
-constexpr uint8_t CHUNKDEPTH {1};
-constexpr uint32_t CHUNKMAXBLOCKS {CHUNKHEIGHT * CHUNKWIDTH * CHUNKDEPTH};
+constexpr uint8_t CHUNKX {16};
+constexpr uint8_t CHUNKY {16};
+constexpr uint8_t CHUNKZ {16};
+constexpr uint32_t CHUNKMAXBLOCKS {CHUNKY * CHUNKX * CHUNKZ};
 
 #endif

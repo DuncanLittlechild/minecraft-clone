@@ -4,7 +4,7 @@
 #include "core/global_consts.h"
 #include "game_api.h"
 struct GameChunk {
-    BlockType::Type blocks[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH];
+    BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ];
     int handle;
     int x, y;
 

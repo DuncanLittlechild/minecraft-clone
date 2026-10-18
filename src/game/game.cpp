@@ -57,13 +57,18 @@ void ProcessInput(UserInput& input, Player& player, float deltaTime, EngineApi& 
     }
 }
 
+GameChunk initChunk{};
+
+void GameInitFn(EngineApi& api)
+{
+    initChunk.Init(0,0);
+    initChunk.handle = api.GetChunkHandle(initChunk.blocks, initChunk.x, initChunk.y);
+}
+
 void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float deltaTime, bool skipRender)
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     ProcessInput(input, data->player, deltaTime, api);
-    static GameChunk initChunk{};
-    initChunk.Init(0,0);
-    initChunk.handle = api.GetChunkHandle(initChunk.blocks, initChunk.x, initChunk.y);
     api.DrawChunk(initChunk.handle);
     memory.imGuiContext = Imgui_Frontend::Draw();
     /*

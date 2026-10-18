@@ -76,6 +76,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     Imgui_Backend::Init(Renderer::GetGPURenderingDevice(), g_window);
 
+    GameInitFn(g_engineApi);
+
     return SDL_APP_CONTINUE;
 }
 

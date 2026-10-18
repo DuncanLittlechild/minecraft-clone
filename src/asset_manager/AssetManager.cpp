@@ -4,6 +4,8 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "asset_manager/create_gpu_assets.h"
+#include "game_api.h"
+#include "meshes.h"
 
 void AssetManager::Load(SDL_GPUDevice* device, SDL_Window* window)
 {
@@ -29,7 +31,7 @@ void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* windo
     GPU_Create::DepthTexture(device, &depthTexture, w, h);
 }
 
-int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH], int cX, int cY)
+int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY)
 {
     // Gets a unique handle
     // NOTE: too many chunks could theoretically fuck this up
@@ -57,22 +59,31 @@ int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CH
 
     Mesh cMesh{};
     int meshCount {0};
-    for(int x {0}; x < CHUNKHEIGHT; ++x)
+    for(int x {0}; x < CHUNKX; ++x)
     {
-        for (int y{0}; y < CHUNKWIDTH; ++y)
+        for (int y{0}; y < CHUNKY; ++y)
         {
-            for (int z {0}; z < CHUNKDEPTH; ++z)
+            for (int z {0}; z < CHUNKZ; ++z)
             {
                 BlockType::Type bType {blocks[x][y][z]};
                 if (bType == BlockType::NOBLOCK)
                   continue;
-                Mesh tmp{
-                    .vertices {CUBEVERTICES.begin(), CUBEVERTICES.end()},
-                    .indices {CUBEINDICES.begin(), CUBEINDICES.end()}
-                };
-                ModifyCubeMesh(tmp, meshCount++, bType, x, y, 0);
-                cMesh.vertices.append_range(tmp.vertices);
-                cMesh.indices.append_range(tmp.indices);
+                // Iterate over the faces for a block
+                //
+                for (auto& face : CubeFace::FACES)
+                {
+                    int nPos[3] {x + CubeFace::FACEDIRS[face][0], y + CubeFace::FACEDIRS[face][1], z + CubeFace::FACEDIRS[face][2]};
+                    if(nPos[0] >= 0 && nPos[0] < CHUNKX && nPos[1] >= 0 && nPos[1] < CHUNKY && nPos[2] >= 0 && nPos[2] < CHUNKZ
+                        && blocks[nPos[0]][nPos[1]][nPos[2]] != BlockType::NOBLOCK )
+                        continue;
+                    Mesh tmp{
+                        .vertices {CUBEVERTICES[face].begin(), CUBEVERTICES[face].end()},
+                        .indices {CUBEFACEINDICES.begin(), CUBEFACEINDICES.end()}
+                    };
+                    ModifyCubeMesh(tmp, meshCount++, bType, x, y, z);
+                    cMesh.vertices.append_range(tmp.vertices);
+                    cMesh.indices.append_range(tmp.indices);       
+                }
             }
         }
     }

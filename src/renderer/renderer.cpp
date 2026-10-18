@@ -27,17 +27,6 @@ std::size_t g_drawDataQueueEnd{0};
 LOCAL Uint32 g_w{};
 LOCAL Uint32 g_h{};
 
-LOCAL GPUMesh g_CubeMesh {};
-
-void CreateCubeMesh()
-{
-    Mesh cMesh {
-        .vertices {CUBEVERTICES.begin(), CUBEVERTICES.end()},
-        .indices {CUBEINDICES.begin(), CUBEINDICES.end()}
-    };
-    g_CubeMesh.UploadToGPU(g_renderDevice, cMesh);
-}
-
 struct DL_VertexPerLoop{
     Matrix4x4 cameraVPMat{};
 };
@@ -148,19 +137,20 @@ void RenderQueue(SDL_GPURenderPass* renderPass)
     for (auto i {0uz}; i < g_drawDataQueueEnd; ++i)
     {
         // Everythings a cube, so only need to push gpu mesh atm
+        GPUMesh& cMesh {g_assetManager.chunks[g_drawDataQueue[i]]};
         std::array cubeVertexBuffers {
             SDL_GPUBufferBinding{
-                .buffer = g_assetManager.chunks[i].vertices,
+                .buffer = cMesh.vertices,
                 .offset = 0
             }
         };
         SDL_GPUBufferBinding cubeIndexBuffer {
-            .buffer = g_assetManager.chunks[i].indices,
+            .buffer = cMesh.indices,
             .offset = 0
         };
         SDL_BindGPUVertexBuffers(renderPass, 0, cubeVertexBuffers.data(), cubeVertexBuffers.size());
         SDL_BindGPUIndexBuffer(renderPass, &cubeIndexBuffer, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-        SDL_DrawGPUIndexedPrimitives(renderPass, g_assetManager.chunks[i].indexCount, 1, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(renderPass, cMesh.indexCount, 1, 0, 0, 0);
     }
 }
 
@@ -211,7 +201,7 @@ void Renderer::RenderGame(ImGuiContext* context)
 
 SDL_GPUDevice* Renderer::GetGPURenderingDevice() { return g_renderDevice; }
 
-int Renderer::GetChunkHandle(BlockType::Type blocks[CHUNKWIDTH][CHUNKHEIGHT][CHUNKDEPTH], int cX, int cY)
+int Renderer::GetChunkHandle(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY)
 {
     return g_assetManager.CreateGPUChunk(g_renderDevice, blocks, cX, cY);
 }
