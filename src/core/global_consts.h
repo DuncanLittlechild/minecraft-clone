@@ -11,7 +11,7 @@
 #define STATIC static
 
 constexpr uint8_t CHUNKX {16};
-constexpr uint8_t CHUNKY {16};
+constexpr uint8_t CHUNKY {255};
 constexpr uint8_t CHUNKZ {16};
 constexpr uint32_t CHUNKMAXBLOCKS {CHUNKY * CHUNKX * CHUNKZ};
 

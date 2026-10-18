@@ -28,6 +28,20 @@ typedef struct Vector3
 		Vector3 tmp{*this};
 		return tmp += rhs;
 	}
+
+		Vector3& operator-=(const Vector3& rhs)
+	{
+		x -= rhs.x;
+		y -= rhs.y;
+		z -= rhs.z;
+		return *this;
+	}
+
+	Vector3 operator-(const Vector3& rhs)
+	{
+		Vector3 tmp{*this};
+		return tmp -=rhs;
+	}
 } Vector3;
 
 inline Vector3 operator*(const Vector3& vec, float scal)

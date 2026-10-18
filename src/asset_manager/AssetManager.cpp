@@ -31,14 +31,8 @@ void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* windo
     GPU_Create::DepthTexture(device, &depthTexture, w, h);
 }
 
-int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY)
+void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY, Mesh& cMesh)
 {
-    // Gets a unique handle
-    // NOTE: too many chunks could theoretically fuck this up
-    auto GetNewChunkHandle {[](){
-        static int handleCount{0};
-        return handleCount++;
-    }};
     // Modifies an inputted cube mesh to be in the position determined by both
     // the chunk's position and the cubes position within the chunk
     auto ModifyCubeMesh {[cX, cY](Mesh& mesh, int meshCount, BlockType::Type bType, int x, int y, int z){
@@ -57,7 +51,6 @@ int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CH
         }
     }};
 
-    Mesh cMesh{};
     int meshCount {0};
     for(int x {0}; x < CHUNKX; ++x)
     {
@@ -69,13 +62,16 @@ int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CH
                 if (bType == BlockType::NOBLOCK)
                   continue;
                 // Iterate over the faces for a block
-                //
+                // if the position is not off the side of the chunk, or the block at that position is solid, do not use
+                // as part of the mesh
                 for (auto& face : CubeFace::FACES)
                 {
+                    // Get the block facing that face of the current block, if it exists
                     int nPos[3] {x + CubeFace::FACEDIRS[face][0], y + CubeFace::FACEDIRS[face][1], z + CubeFace::FACEDIRS[face][2]};
                     if(nPos[0] >= 0 && nPos[0] < CHUNKX && nPos[1] >= 0 && nPos[1] < CHUNKY && nPos[2] >= 0 && nPos[2] < CHUNKZ
                         && blocks[nPos[0]][nPos[1]][nPos[2]] != BlockType::NOBLOCK )
                         continue;
+                    // If the face is visible, modify it and add it to cMesh.
                     Mesh tmp{
                         .vertices {CUBEVERTICES[face].begin(), CUBEVERTICES[face].end()},
                         .indices {CUBEFACEINDICES.begin(), CUBEFACEINDICES.end()}
@@ -87,10 +83,30 @@ int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CH
             }
         }
     }
+}
+
+int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY)
+{
+    // Gets a unique handle
+    // NOTE: too many chunks could theoretically fuck this up
+    auto GetNewChunkHandle {[](){
+        static int handleCount{0};
+        return handleCount++;
+    }};
+    Mesh cMesh{};
+    CreateChunkMesh(blocks, cX, cY, cMesh);
     int handle {GetNewChunkHandle()};
     chunks[handle] = GPUMesh{};
     chunks[handle].UploadToGPU(device, cMesh);
     return handle;
+}
+
+void AssetManager::RecreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int handle, int cX, int cY)
+{
+    Mesh cMesh{};
+    CreateChunkMesh(blocks, cX, cY, cMesh);
+    chunks[handle].Clear(device);
+    chunks[handle].UploadToGPU(device, cMesh); 
 }
 
 

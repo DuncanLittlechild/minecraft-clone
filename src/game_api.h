@@ -45,9 +45,10 @@ struct UserInput {
         LEFT_CLICK = 0x01,
         RIGHT_CLICK = 0x02,
         MIDDLE_CLICK = 0x04,
+        MOUSE_MOVED = 0x08
     };
     KType keys{0};
-    MType but{0};
+    MType mouse{0};
     float mXAbs{.0f};
     float mYAbs{.0f};
     float mXRel{.0f};
@@ -58,6 +59,7 @@ struct EngineApi {
     void (*UpdateCamera)(float, float, float, float);
     int (*GetChunkHandle)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
     void (*DrawChunk)(int);
+    void (*RerenderChunk)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY, int handle);
 };
 
 struct GameMemory {
@@ -68,7 +70,7 @@ struct GameMemory {
 };
 
 // Both of these are located in game/game.cpp
-void GameInitFn(EngineApi& api);
+void GameInitFn(GameMemory&, EngineApi& api);
 void GameUpdateFn(GameMemory&, EngineApi&, UserInput&, float deltaTime, bool skipRender); 
 std::size_t GetGameDataSizeFn();
 

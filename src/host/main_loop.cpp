@@ -27,6 +27,7 @@ void InitEngineApi()
     g_engineApi.UpdateCamera = Renderer::UpdateCamera;
     g_engineApi.GetChunkHandle = Renderer::GetChunkHandle;
     g_engineApi.DrawChunk = Renderer::DrawChunk;
+    g_engineApi.RerenderChunk = Renderer::RerenderChunk;
 }
 
 bool InitGameMemory()
@@ -76,7 +77,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     Imgui_Backend::Init(Renderer::GetGPURenderingDevice(), g_window);
 
-    GameInitFn(g_engineApi);
+    GameInitFn(g_gameMemory, g_engineApi);
 
     return SDL_APP_CONTINUE;
 }
@@ -112,6 +113,7 @@ SDL_AppResult SDL_AppIterate(void* appstate){
     };
 
     GameUpdateFn(g_gameMemory, g_engineApi, g_userInput, deltaTime, skipRender);
+    ResetInput(g_userInput);
     if(!skipRender)
         Renderer::RenderGame(g_gameMemory.imGuiContext);
 

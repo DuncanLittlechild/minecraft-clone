@@ -2,12 +2,22 @@
 #include "game_api.h"
 #include "imgui/dl_imgui_frontend.h"
 #include "game/GameChunk.h"
+#include "raycasting.h"
+#include <optional>
 #include <vector>
 
 std::size_t GetGameDataSizeFn() { return sizeof(GameData); }
 
+void RerenderDirtyChunks(World& world, EngineApi& api)
+{
+    for (auto& chunk : world.dirtyChunks)
+    {
+        api.RerenderChunk(chunk->blocks, chunk->x, chunk->y, chunk->handle);
+    }
+}
+
 // If an input was pushed which would move the player, return true to signal the main loop to update the camera.
-void ProcessInput(UserInput& input, Player& player, float deltaTime, EngineApi& api)
+void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& api)
 {
     static float movFactor {2.0f};
     float xMov {0.0f};
@@ -31,23 +41,12 @@ void ProcessInput(UserInput& input, Player& player, float deltaTime, EngineApi& 
     {
         xMov += camChange;
     }   
-    if(input.keys & UserInput::UP_PRESSED)
+    if(input.mouse & UserInput::MOUSE_MOVED)
     {
-        yCamMov += camChange;
-    }   
-    if(input.keys & UserInput::DOWN_PRESSED)
-    {
-        yCamMov -= camChange;
-    }   
-    if(input.keys & UserInput::LEFT_PRESSED)
-    {
-        xCamMov -= camChange;
-    }   
-    if(input.keys & UserInput::RIGHT_PRESSED)
-    {
-        xCamMov += camChange;
-    }   
-    if(input.keys)
+        yCamMov = camChange * -input.mYRel;
+        xCamMov = camChange * input.mXRel;
+    }
+    if(input.keys || input.mouse & UserInput::MOUSE_MOVED)
     {
         player.x += xMov;
         player.z += zMov;
@@ -57,22 +56,45 @@ void ProcessInput(UserInput& input, Player& player, float deltaTime, EngineApi& 
     }
 }
 
-GameChunk initChunk{};
-
-void GameInitFn(EngineApi& api)
+void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime, EngineApi& api)
 {
-    initChunk.Init(0,0);
-    initChunk.handle = api.GetChunkHandle(initChunk.blocks, initChunk.x, initChunk.y);
+    UpdatePlayer(input, player, deltaTime, api);
+    
+    if (input.mouse & UserInput::LEFT_CLICK)
+    {
+        std::optional<Vector3> targetBlock{GetCoordinatesOfFirstBlockInRange(world, player, 1.0f)};
+        if(targetBlock)
+        {
+            world.DestroyBlockUnsafe(targetBlock.value());
+        }
+    }
+
+    if(world.HasDirtyChunks())
+    {
+        RerenderDirtyChunks(world, api);
+        world.ClearDirtyChunks();
+    }
+}
+
+void RenderGame(World& world, EngineApi& api)
+{
+    api.DrawChunk(world.chunks[0][0].handle);
+}
+
+
+void GameInitFn(GameMemory& memory, EngineApi& api)
+{
+    GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
+    new (data) GameData{};
+    data->world.CreateChunk(0, 0, api);
 }
 
 void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float deltaTime, bool skipRender)
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
-    ProcessInput(input, data->player, deltaTime, api);
-    api.DrawChunk(initChunk.handle);
+    UpdateGame(input, data->player, data->world, deltaTime, api);
+    
+    if(!skipRender)
+        RenderGame(data->world, api);
     memory.imGuiContext = Imgui_Frontend::Draw();
-    /*
-    api.DrawSprite(initBlock.ToRenderData());
-    api.DrawSprite(initBlock2.ToRenderData());
-    */
 }

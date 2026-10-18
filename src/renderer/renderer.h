@@ -41,6 +41,8 @@ namespace Renderer {
     SDL_GPUDevice* GetGPURenderingDevice();
 
     int GetChunkHandle(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
+
+    void RerenderChunk(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int, int);
 }
 
 #endif

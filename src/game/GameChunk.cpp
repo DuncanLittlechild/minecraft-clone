@@ -3,10 +3,8 @@
 #include "game_api.h"
 
 
-void GameChunk::Init(int cX, int cY)
+void GameChunk::Init(int cX, int cY, EngineApi& api)
 {
-    // TODO: link handle to value retreived from the renderer
-    handle = 0;
     x = cX;
     y = cY;
     for (int x {0}; x < CHUNKX; ++x)
@@ -19,4 +17,6 @@ void GameChunk::Init(int cX, int cY)
             }
         }
     }
+
+    handle = api.GetChunkHandle(blocks, x, y);
 }

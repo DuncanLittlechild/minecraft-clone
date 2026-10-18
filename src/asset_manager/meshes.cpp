@@ -91,3 +91,16 @@ bool GPUMesh::UploadToGPU(SDL_GPUDevice* device, const Mesh& mesh)
     SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
     return true;    
 }
+
+void GPUMesh::Clear(SDL_GPUDevice* device)
+{
+    if(vertices != nullptr)
+    {
+        SDL_ReleaseGPUBuffer(device, vertices);
+    }
+    if(indices != nullptr)
+    {
+        SDL_ReleaseGPUBuffer(device, indices);
+    }
+    indexCount = 0;
+}

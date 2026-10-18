@@ -3,6 +3,16 @@
 #include "SDL3/SDL_init.h"
 #include "game_api.h"
 
+// Key presses rely on values persisting from loop to loop to detect
+// when a key is held, while the mouse input only cares about
+// what just happened that loop
+void ResetInput(UserInput& input)
+{
+    input.mouse = 0;
+    input.mYRel = 0.0f;
+    input.mXRel = 0.0f;
+}
+
 SDL_AppResult HandleEvent(SDL_Event* event, UserInput& input)
 {
     switch(event->type) {
@@ -68,14 +78,15 @@ SDL_AppResult HandleEvent(SDL_Event* event, UserInput& input)
         case (SDL_EVENT_MOUSE_BUTTON_DOWN):{
             switch(event->button.button){
                 case(SDL_BUTTON_LEFT):{
-                    input.but |= UserInput::LEFT_CLICK;
+                    input.mouse |= UserInput::LEFT_CLICK;
                 } break;
                 case(SDL_BUTTON_RIGHT):{
-                    input.but |= UserInput::RIGHT_CLICK;
+                    input.mouse |= UserInput::RIGHT_CLICK;
                 } break;
             }
         } break;
         case(SDL_EVENT_MOUSE_MOTION):{
+            input.mouse |= UserInput::MOUSE_MOVED;
             input.mXAbs = event->motion.x;
             input.mYAbs = event->motion.y;
             input.mXRel = event->motion.xrel;

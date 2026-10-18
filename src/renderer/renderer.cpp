@@ -205,3 +205,8 @@ int Renderer::GetChunkHandle(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int
 {
     return g_assetManager.CreateGPUChunk(g_renderDevice, blocks, cX, cY);
 }
+
+void Renderer::RerenderChunk(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY, int handle)
+{
+    g_assetManager.RecreateGPUChunk(g_renderDevice, blocks, cX, cY, handle);
+}

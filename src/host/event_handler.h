@@ -35,6 +35,8 @@ struct ButtonTimer {
 };
 */
 
+void ResetInput(UserInput&);
+
 SDL_AppResult HandleEvent(SDL_Event*, UserInput&);
 
 #endif

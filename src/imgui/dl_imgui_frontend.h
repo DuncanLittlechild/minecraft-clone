@@ -4,7 +4,6 @@
 // Is unaware of the specific backend being used, 
 // which must be setup in the platform host layer
 #include "imgui_internal.h"
-#include "game/Block.h"
 
 namespace Imgui_Frontend{
     [[nodiscard("Creates context to be passed back to host")]] ImGuiContext* Draw();

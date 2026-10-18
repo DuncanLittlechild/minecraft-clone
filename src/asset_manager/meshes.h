@@ -12,6 +12,7 @@ struct Mesh{
 
 struct GPUMesh{
     bool UploadToGPU(SDL_GPUDevice*, const Mesh&);
+    void Clear(SDL_GPUDevice*);
 
     SDL_GPUBuffer* vertices{nullptr};
     SDL_GPUBuffer* indices{nullptr};
