@@ -31,17 +31,17 @@ void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* windo
     GPU_Create::DepthTexture(device, &depthTexture, w, h);
 }
 
-void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY, Mesh& cMesh)
+void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ, Mesh& cMesh)
 {
     // Modifies an inputted cube mesh to be in the position determined by both
     // the chunk's position and the cubes position within the chunk
-    auto ModifyCubeMesh {[cX, cY](Mesh& mesh, int meshCount, BlockType::Type bType, int x, int y, int z){
+    auto ModifyFaceMesh {[cX, cZ](Mesh& mesh, int meshCount, BlockType::Type bType, int x, int y, int z){
         std::size_t indexInc {mesh.vertices.size() * meshCount};
         for(auto& vert : mesh.vertices)
         {
             vert.x += x + cX;
-            vert.y += y + cY;
-            vert.z += z;
+            vert.y += y;
+            vert.z += z + cZ;
             vert.d = static_cast<int>(bType);
         }
 
@@ -76,7 +76,7 @@ void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int c
                         .vertices {CUBEVERTICES[face].begin(), CUBEVERTICES[face].end()},
                         .indices {CUBEFACEINDICES.begin(), CUBEFACEINDICES.end()}
                     };
-                    ModifyCubeMesh(tmp, meshCount++, bType, x, y, z);
+                    ModifyFaceMesh(tmp, meshCount++, bType, x, y, z);
                     cMesh.vertices.append_range(tmp.vertices);
                     cMesh.indices.append_range(tmp.indices);       
                 }
@@ -85,7 +85,7 @@ void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int c
     }
 }
 
-int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY)
+int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ)
 {
     // Gets a unique handle
     // NOTE: too many chunks could theoretically fuck this up
@@ -94,7 +94,7 @@ int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CH
         return handleCount++;
     }};
     Mesh cMesh{};
-    CreateChunkMesh(blocks, cX, cY, cMesh);
+    CreateChunkMesh(blocks, cX, cZ, cMesh);
     int handle {GetNewChunkHandle()};
     chunks[handle] = GPUMesh{};
     chunks[handle].UploadToGPU(device, cMesh);

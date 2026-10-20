@@ -10,8 +10,8 @@ LOCAL constexpr int CHUNKPOSMASK {~0b1111};
 GameChunk* World::GetChunkSafe(const Vector3& coord)
 {
     int cCoords[2] {(int)coord.x & CHUNKPOSMASK, (int)coord.z & CHUNKPOSMASK};
-    if(chunks.contains(cCoords[0]) && chunks.at(cCoords[0]).contains(cCoords[1]))
-        return &chunks[cCoords[0]][cCoords[1]];
+    if(chunks.contains({cCoords[0],cCoords[1]}))
+        return &chunks[{cCoords[0], cCoords[1]}];
     else
         return nullptr;
 }
@@ -19,15 +19,15 @@ GameChunk* World::GetChunkSafe(const Vector3& coord)
 GameChunk& World::GetChunkUnsafe(const Vector3& coord)
 {
     int cCoords[2] {(int)coord.x & CHUNKPOSMASK, (int)coord.z & CHUNKPOSMASK};
-    return chunks[cCoords[0]][cCoords[1]];
+    return chunks[{cCoords[0], cCoords[1]}];
 }
 
 BlockType::Type* World::GetBlockSafe(const Vector3& coord)
 {
     int cCoords[2] {(int)coord.x & CHUNKPOSMASK, (int)coord.z & CHUNKPOSMASK};
-    if(!(chunks.contains(cCoords[0]) && chunks.at(cCoords[0]).contains(cCoords[1])))
+    if(!(chunks.contains({cCoords[0],cCoords[1]})))
         return nullptr;
-    GameChunk* chunk {&chunks.at(cCoords[0]).at(cCoords[1])};
+    GameChunk* chunk {&chunks.at({cCoords[0],cCoords[1]})};
     int x {static_cast<int>(coord.x - cCoords[0])};
     int y {static_cast<int>(coord.y)};
     int z {static_cast<int>(coord.z - cCoords[1])};
@@ -46,7 +46,7 @@ BlockType::Type* World::GetBlockSafe(const Vector3& coord)
 BlockType::Type& World::GetBlockUnsafe(const Vector3& coord)
 {
     int cCoords[2] {(int)coord.x & CHUNKPOSMASK, (int)coord.z & CHUNKPOSMASK};
-    GameChunk& chunk {chunks[cCoords[0]][cCoords[1]]};
+    GameChunk& chunk {chunks[{cCoords[0],cCoords[1]}]};
     int x {static_cast<int>(coord.x - cCoords[0])};
     int y {static_cast<int>(coord.y)};
     int z {static_cast<int>(coord.z - cCoords[1])};
@@ -78,8 +78,31 @@ void World::DestroyBlockUnsafe(const Vector3& block)
     MarkChunkDirty(hostChunk);
 }
 
-void World::CreateChunk(int x, int y, EngineApi& api)
+constexpr std::pair<float, float> CHUNKOFFSETS[4] {
+    {1,0},
+    {0,1},
+    {-1,0},
+    {0,-1}
+};
+
+void World::MarkExistingNeighboursDirty(int x, int z)
 {
-    chunks[x][y] = GameChunk{};
-    chunks[x][y].Init(x, y, api);
+    for (auto& offset : CHUNKOFFSETS)
+    {
+        GameChunk* chunk {GetChunkSafe({offset.first + x, 0, offset.second + z})};
+        if(chunk != nullptr)
+        {
+            MarkChunkDirty(*chunk);
+        }
+    }
+}
+
+void World::CreateChunk(int x, int z, EngineApi& api)
+{
+    x &= CHUNKPOSMASK;
+    z &= CHUNKPOSMASK;
+    chunks[{x,z}] = GameChunk{};
+    chunks[{x,z}].Init(x, z, api);
+    // Mark neighbouring chunks as dirty, if they exist
+    MarkExistingNeighboursDirty(x, z);
 }

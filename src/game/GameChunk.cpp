@@ -3,20 +3,20 @@
 #include "game_api.h"
 
 
-void GameChunk::Init(int cX, int cY, EngineApi& api)
+void GameChunk::Init(int cX, int cZ, EngineApi& api)
 {
     x = cX;
-    y = cY;
-    for (int x {0}; x < CHUNKX; ++x)
+    z = cZ;
+    for (int bX {0}; bX < CHUNKX; ++bX)
     {
-        for (int y {0}; y < CHUNKY; ++y)
+        for (int bY {0}; bY < CHUNKY; ++bY)
         {
-            for (int z {0}; z < CHUNKZ; ++z)
+            for (int bZ {0}; bZ < CHUNKZ; ++bZ)
             {
-                blocks[x][y][z] = BlockType::DIRT;
+                blocks[bX][bY][bZ] = BlockType::DIRT;
             }
         }
     }
 
-    handle = api.GetChunkHandle(blocks, x, y);
+    handle = api.GetChunkHandle(blocks, x, z);
 }

@@ -12,7 +12,7 @@ void RerenderDirtyChunks(World& world, EngineApi& api)
 {
     for (auto& chunk : world.dirtyChunks)
     {
-        api.RerenderChunk(chunk->blocks, chunk->x, chunk->y, chunk->handle);
+        api.RerenderChunk(chunk->blocks, chunk->x, chunk->z, chunk->handle);
     }
 }
 
@@ -56,6 +56,12 @@ void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& 
 void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime, EngineApi& api)
 {
     UpdatePlayer(input, player, deltaTime, api);
+
+    // If there is no chunk at the player position, spawn one in
+    if(world.GetChunkSafe(player.pos) == nullptr)
+    {
+        world.CreateChunk(player.pos.x, player.pos.z, api);
+    }
     
     // This half works, but the block destroyed isn't the one in front of the player
     // It's always slightly off to one side or another,
@@ -83,7 +89,10 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
 
 void RenderGame(World& world, EngineApi& api)
 {
-    api.DrawChunk(world.chunks[0][0].handle);
+    for (auto& chunk : world.chunks)
+    {
+        api.DrawChunk(chunk.second.handle);
+    }
 }
 
 
@@ -91,11 +100,9 @@ void GameInitFn(GameMemory& memory, EngineApi& api)
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     new (data) GameData{};
-    data->player.pos = {0.0f, 255.f, .0f};
-    data->player.target = {1.0f, 255.f, 1.0f};
+    data->player.pos = {8.0f, 256.f, 8.0f};
+    data->player.target = {9.0f, 256.f, 9.0f};
     data->player.Init(api);
-    data->world.CreateChunk(0, 0, api);
-
 }
 
 void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float deltaTime, bool skipRender)

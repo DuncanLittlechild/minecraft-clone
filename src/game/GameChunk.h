@@ -6,7 +6,7 @@
 struct GameChunk {
     BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ];
     int handle;
-    int x, y;
+    int x, z;
     bool dirty{false};
 
     void Init(int, int, EngineApi&);

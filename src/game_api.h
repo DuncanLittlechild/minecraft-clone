@@ -59,7 +59,7 @@ struct UserInput {
 struct EngineApi {
     int (*GetChunkHandle)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
     void (*DrawChunk)(int);
-    void (*RerenderChunk)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY, int handle);
+    void (*RerenderChunk)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ, int handle);
     // MUST be called before game start, as also initialises camera matrices
     void (*SyncCameraToPlayer)(const Matrix4x4&);
 };
