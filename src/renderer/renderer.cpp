@@ -79,7 +79,7 @@ bool Renderer::Init(SDL_Window* window, float w, float h)
 
     g_assetManager.Load(g_renderDevice, g_window);
 
-    g_camera.Init(w, h);
+    g_camera.aspectRatio = w/h;
 
     return true;
 }
@@ -126,11 +126,6 @@ void Renderer::DrawChunk(int handle)
     g_drawDataQueue[g_drawDataQueueEnd++] = handle;
 }
 
-void Renderer::UpdateCamera(float xMov, float zMov, float xCamMov, float yCamMov)
-{
-    g_camera.UpdateCam(xMov, zMov, xCamMov, yCamMov);
-}
-
 // Iterates over draw data queue
 void RenderQueue(SDL_GPURenderPass* renderPass)
 {
@@ -156,7 +151,7 @@ void RenderQueue(SDL_GPURenderPass* renderPass)
 
 void Renderer::RenderGame(ImGuiContext* context)
 {
-    Imgui_Backend::Prepare(g_commandBuffer, context, g_camera);
+    Imgui_Backend::Prepare(g_commandBuffer, context);
     /* PREPARE INFO STRUCTS*/
     SDL_GPUColorTargetInfo targetInfo {
         .texture = g_swapchainTexture,
@@ -209,4 +204,10 @@ int Renderer::GetChunkHandle(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int
 void Renderer::RerenderChunk(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY, int handle)
 {
     g_assetManager.RecreateGPUChunk(g_renderDevice, blocks, cX, cY, handle);
+}
+
+void SyncCameraToPlayer(const Matrix4x4& viewMat)
+{
+    g_camera.viewMat = viewMat;
+    g_camera.UpdateVpMat();
 }

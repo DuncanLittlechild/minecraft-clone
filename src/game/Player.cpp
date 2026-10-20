@@ -2,9 +2,11 @@
 #include "core/Matrix4x4.h"
 #include "core/global_consts.h"
 
-void Player::Init()
+void Player::Init(EngineApi& api)
 {
     viewMat = Matrix4x4_CreateViewMatrix(pos, target, worldUp);
+    Update(0,0,0,0);
+    api.SyncCameraToPlayer(viewMat);
 }
 
 void Player::UpdateViewMat()

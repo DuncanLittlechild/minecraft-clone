@@ -2,6 +2,7 @@
 #include "GameData.h"
 #include "game_api.h"
 #include <optional>
+#include "imgui_global.h"
 
 void Ray::Move(const float dist)
 {
@@ -26,6 +27,11 @@ std::optional<Vector3> GetCoordinatesOfFirstBlockInRangeSafe(World& world, Playe
         }
         distanceMoved += RAYINCREMENT;
     } while (distanceMoved < range && !insideBlock);
+
+    // TODO: remove in final build
+    imGlob.lastRayStart = ray.origin;
+    imGlob.lastRayEnd = ray.pos;
+    imGlob.lastRayDir = ray.dir;
 
     if (insideBlock)
         return ray.pos;

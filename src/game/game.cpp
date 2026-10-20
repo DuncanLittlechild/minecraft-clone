@@ -49,7 +49,7 @@ void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& 
     if(input.keys || input.mouse & UserInput::MOUSE_MOVED)
     {
         player.Update(xMov, zMov, xCamMov, yCamMov);
-        api.UpdateCamera(xMov, zMov, xCamMov, yCamMov);
+        api.SyncCameraToPlayer(player.viewMat);
     }
 }
 
@@ -57,6 +57,11 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
 {
     UpdatePlayer(input, player, deltaTime, api);
     
+    // This half works, but the block destroyed isn't the one in front of the player
+    // It's always slightly off to one side or another,
+    // Or in some cases, massively off to one side.
+    // Or in other cases, so far off to one side it seems like it doesn't work
+    // WHY
     if (input.mouse & UserInput::LEFT_CLICK)
     {
         std::optional<Vector3> targetBlock{GetCoordinatesOfFirstBlockInRangeSafe(world, player, 10.0f)};
@@ -66,6 +71,9 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
         }
     }
 
+    // This works well
+    // Good code.
+    // Well done
     if(world.HasDirtyChunks())
     {
         RerenderDirtyChunks(world, api);
@@ -83,8 +91,11 @@ void GameInitFn(GameMemory& memory, EngineApi& api)
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     new (data) GameData{};
-    data->player.Init();
+    data->player.pos = {0.0f, 255.f, .0f};
+    data->player.target = {1.0f, 255.f, 1.0f};
+    data->player.Init(api);
     data->world.CreateChunk(0, 0, api);
+
 }
 
 void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float deltaTime, bool skipRender)

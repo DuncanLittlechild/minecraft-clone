@@ -1,5 +1,6 @@
 #ifndef DL_TEMPLATE_GAMEAPI_H
 #define DL_TEMPLATE_GAMEAPI_H
+#include "core/Matrix4x4.h"
 #include "core/global_consts.h"
 #include "imgui_internal.h"
 #include <cstddef>
@@ -56,10 +57,11 @@ struct UserInput {
 };
 
 struct EngineApi {
-    void (*UpdateCamera)(float, float, float, float);
     int (*GetChunkHandle)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
     void (*DrawChunk)(int);
     void (*RerenderChunk)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int cX, int cY, int handle);
+    // MUST be called before game start, as also initialises camera matrices
+    void (*SyncCameraToPlayer)(const Matrix4x4&);
 };
 
 struct GameMemory {
@@ -70,7 +72,7 @@ struct GameMemory {
 };
 
 // Both of these are located in game/game.cpp
-void GameInitFn(GameMemory&, EngineApi& api);
+void GameInitFn(GameMemory&, EngineApi&);
 void GameUpdateFn(GameMemory&, EngineApi&, UserInput&, float deltaTime, bool skipRender); 
 std::size_t GetGameDataSizeFn();
 

@@ -45,4 +45,7 @@ namespace Renderer {
     void RerenderChunk(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int, int);
 }
 
+// Included here because Renderer.cpp owns the camera
+void SyncCameraToPlayer(const Matrix4x4&);
+
 #endif

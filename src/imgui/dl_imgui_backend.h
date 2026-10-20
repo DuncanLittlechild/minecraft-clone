@@ -11,7 +11,7 @@ namespace Imgui_Backend{
 
     void SetupFrame();
 
-    void Prepare(SDL_GPUCommandBuffer*, ImGuiContext*, Camera3d&);
+    void Prepare(SDL_GPUCommandBuffer*, ImGuiContext*);
 
     void Render(SDL_GPUCommandBuffer*, SDL_GPURenderPass*);
 
