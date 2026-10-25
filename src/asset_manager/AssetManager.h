@@ -29,8 +29,25 @@ struct AssetManager {
 
     void Load(SDL_GPUDevice*, SDL_Window*);
     void RecreateDepthTexture(SDL_GPUDevice*, SDL_Window*);
-    int CreateGPUChunk(SDL_GPUDevice*,BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
-    void RecreateGPUChunk(SDL_GPUDevice*, BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int, int);
+    int CreateGPUChunk(
+        SDL_GPUDevice*,
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ
+    );
+    void RecreateGPUChunk(
+        SDL_GPUDevice*, 
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ,
+        int handle
+    );
     //void UploadToInstanceBuffer();
 };
 

@@ -4,6 +4,7 @@
 #include <array>
 #include "asset_manager/Vertex.h"
 #include "SDL3/SDL.h"
+#include "game_api.h"
 
 struct Mesh{    
     std::vector<Vertex> vertices{};
@@ -20,26 +21,16 @@ struct GPUMesh{
 };
 
 namespace CubeFace {
-    enum Face {
-        NORTH,
-        SOUTH,
-        EAST,
-        WEST,
-        TOP,
-        BOTTOM,
-        MAX_FACE,
-        MIN_FACE = 0
-    };
-    constexpr std::array<Face, MAX_FACE> FACES {{
-        NORTH,
-        SOUTH,
-        EAST,
-        WEST,
-        TOP,
-        BOTTOM
+    constexpr std::array<Direction, DIRECTION_MAX> FACES {{
+        DIRECTION_NORTH,
+        DIRECTION_SOUTH,
+        DIRECTION_EAST,
+        DIRECTION_WEST,
+        DIRECTION_UP,
+        DIRECTION_DOWN
     }};
 
-    constexpr std::array<int[3], MAX_FACE> FACEDIRS {{
+    constexpr std::array<int[3], DIRECTION_MAX> FACEDIRS {{
         {0,0,-1},
         {0,0,1},
         {1,0,0},

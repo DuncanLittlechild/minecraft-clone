@@ -196,14 +196,29 @@ void Renderer::RenderGame(ImGuiContext* context)
 
 SDL_GPUDevice* Renderer::GetGPURenderingDevice() { return g_renderDevice; }
 
-int Renderer::GetChunkHandle(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ)
+int Renderer::GetChunkHandle(
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ
+    )
 {
-    return g_assetManager.CreateGPUChunk(g_renderDevice, blocks, cX, cZ);
+    return g_assetManager.CreateGPUChunk(g_renderDevice, main, n, s, e, w, cX, cZ);
 }
 
-void Renderer::RerenderChunk(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ, int handle)
+void Renderer::RerenderChunk(
+        BlockType::Type main[CHUNKX][CHUNKY][CHUNKZ], 
+        BlockType::Type n[CHUNKX][CHUNKY][CHUNKZ], 
+        BlockType::Type s[CHUNKX][CHUNKY][CHUNKZ], 
+        BlockType::Type e[CHUNKX][CHUNKY][CHUNKZ], 
+        BlockType::Type w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ,
+        int handle
+    )
 {
-    g_assetManager.RecreateGPUChunk(g_renderDevice, blocks, cX, cZ, handle);
+    g_assetManager.RecreateGPUChunk(g_renderDevice, main, n, s, e, w, cX, cZ, handle);
 }
 
 void SyncCameraToPlayer(const Matrix4x4& viewMat)

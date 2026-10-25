@@ -31,11 +31,19 @@ void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* windo
     GPU_Create::DepthTexture(device, &depthTexture, w, h);
 }
 
-void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ, Mesh& cMesh)
+LOCAL void CreateChunkMesh(
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ,
+        Mesh& cMesh
+    )
 {
     // Modifies an inputted cube mesh to be in the position determined by both
     // the chunk's position and the cubes position within the chunk
-    auto ModifyFaceMesh {[cX, cZ](Mesh& mesh, int meshCount, BlockType::Type bType, int x, int y, int z){
+    auto ModifyFaceMesh {[cX, cZ](Mesh& mesh, int meshCount, Block bType, int x, int y, int z){
         std::size_t indexInc {mesh.vertices.size() * meshCount};
         for(auto& vert : mesh.vertices)
         {
@@ -51,6 +59,7 @@ void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int c
         }
     }};
 
+
     int meshCount {0};
     for(int x {0}; x < CHUNKX; ++x)
     {
@@ -58,7 +67,7 @@ void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int c
         {
             for (int z {0}; z < CHUNKZ; ++z)
             {
-                BlockType::Type bType {blocks[x][y][z]};
+                Block bType {main[x][y][z]};
                 if (bType == BlockType::NOBLOCK)
                   continue;
                 // Iterate over the faces for a block
@@ -68,8 +77,32 @@ void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int c
                 {
                     // Get the block facing that face of the current block, if it exists
                     int nPos[3] {x + CubeFace::FACEDIRS[face][0], y + CubeFace::FACEDIRS[face][1], z + CubeFace::FACEDIRS[face][2]};
-                    if(nPos[0] >= 0 && nPos[0] < CHUNKX && nPos[1] >= 0 && nPos[1] < CHUNKY && nPos[2] >= 0 && nPos[2] < CHUNKZ
-                        && blocks[nPos[0]][nPos[1]][nPos[2]] != BlockType::NOBLOCK )
+                    // If the block borders another chunk, check the relevant coordinates of that chunk
+                    if(nPos[0] < 0)
+                    { 
+                        if(w != nullptr 
+                            && w[CHUNKX - 1][y][z] != BlockType::NOBLOCK)
+                            continue;
+                    }
+                    else if(nPos[0] >= CHUNKX)
+                    {
+                        if (e != nullptr
+                            && e[0][y][z] != BlockType::NOBLOCK)
+                            continue;
+                    }
+                    else if(nPos[2] < 0)
+                    {
+                        if(n != nullptr
+                            && n[x][y][CHUNKZ - 1] != BlockType::NOBLOCK)
+                            continue;
+                    }
+                    else if(nPos[2] >= CHUNKZ)
+                    {
+                        if(s != nullptr
+                           && s[x][y][0] != BlockType::NOBLOCK)
+                            continue;
+                    }
+                    else if(nPos[1] >= 0 && nPos[1] < CHUNKY && main[nPos[0]][nPos[1]][nPos[2]] != BlockType::NOBLOCK )
                         continue;
                     // If the face is visible, modify it and add it to cMesh.
                     Mesh tmp{
@@ -85,7 +118,15 @@ void LOCAL CreateChunkMesh(BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int c
     }
 }
 
-int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ)
+int AssetManager::CreateGPUChunk(
+    SDL_GPUDevice* device,
+    Block main[CHUNKX][CHUNKY][CHUNKZ], 
+    Block n[CHUNKX][CHUNKY][CHUNKZ], 
+    Block s[CHUNKX][CHUNKY][CHUNKZ], 
+    Block e[CHUNKX][CHUNKY][CHUNKZ], 
+    Block w[CHUNKX][CHUNKY][CHUNKZ], 
+    int cX, int cZ
+    )
 {
     // Gets a unique handle
     // NOTE: too many chunks could theoretically fuck this up
@@ -94,17 +135,26 @@ int AssetManager::CreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CH
         return handleCount++;
     }};
     Mesh cMesh{};
-    CreateChunkMesh(blocks, cX, cZ, cMesh);
+    CreateChunkMesh(main, n, s, e, w, cX, cZ, cMesh);
     int handle {GetNewChunkHandle()};
     chunks[handle] = GPUMesh{};
     chunks[handle].UploadToGPU(device, cMesh);
     return handle;
 }
 
-void AssetManager::RecreateGPUChunk(SDL_GPUDevice* device,BlockType::Type blocks[CHUNKX][CHUNKY][CHUNKZ], int handle, int cX, int cY)
+void AssetManager::RecreateGPUChunk(
+    SDL_GPUDevice* device,
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ,
+        int handle
+    )
 {
     Mesh cMesh{};
-    CreateChunkMesh(blocks, cX, cY, cMesh);
+    CreateChunkMesh(main, n, s, e, w, cX, cZ, cMesh);
     chunks[handle].Clear(device);
     chunks[handle].UploadToGPU(device, cMesh); 
 }

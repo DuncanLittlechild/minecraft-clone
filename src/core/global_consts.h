@@ -10,9 +10,14 @@
 #define SHARED static
 #define STATIC static
 
-constexpr uint8_t CHUNKX {16};
-constexpr uint8_t CHUNKY {255};
-constexpr uint8_t CHUNKZ {16};
+// These values are used to calculate chunk size.
+// they must all be powers of 2
+// CHUNKX and CHUNKZ must always have the same value
+constexpr uint16_t CHUNKX {16};
+constexpr uint16_t CHUNKY {256};
+constexpr uint16_t CHUNKZ {16};
 constexpr uint32_t CHUNKMAXBLOCKS {CHUNKY * CHUNKX * CHUNKZ};
+
+static_assert(CHUNKX == CHUNKZ);
 
 #endif

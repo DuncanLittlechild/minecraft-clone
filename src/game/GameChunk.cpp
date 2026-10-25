@@ -1,7 +1,5 @@
 #include "GameChunk.h"
 #include "core/global_consts.h"
-#include "game_api.h"
-
 
 void GameChunk::Init(int cX, int cZ, EngineApi& api)
 {
@@ -17,6 +15,4 @@ void GameChunk::Init(int cX, int cZ, EngineApi& api)
             }
         }
     }
-
-    handle = api.GetChunkHandle(blocks, x, z);
 }

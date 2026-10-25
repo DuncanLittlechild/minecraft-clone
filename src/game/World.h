@@ -2,7 +2,7 @@
 #define DL_SDL3GPU_PROJECT_TEMPLATE_WORLD_H
 #include <unordered_map>
 #include <vector>
-#include <utility>
+#include "game_api.h"
 #include "game/GameChunk.h"
 #include "core/Matrix4x4.h"
 
@@ -21,14 +21,13 @@ struct PairHash{
     }
 };
 
-
 struct World {
     // Int values in key are x and z coordinates respectively
     std::unordered_map<std::pair<int, int>, GameChunk, PairHash> chunks{};
     std::vector<GameChunk*> dirtyChunks{};
 
-    GameChunk* GetChunkSafe(const Vector3&);
-    GameChunk& GetChunkUnsafe(const Vector3&);
+    GameChunk* GetChunkSafe(const int x, const int z);
+    GameChunk& GetChunkUnsafe(const int x, const int z);
 
     BlockType::Type* GetBlockSafe(const Vector3&);
     BlockType::Type& GetBlockUnsafe(const Vector3&);
@@ -38,7 +37,9 @@ struct World {
     void DestroyBlockSafe(const Vector3&);
     void DestroyBlockUnsafe(const Vector3&);
 
-    void MarkExistingNeighboursDirty(int, int);
+    void MarkExistingNeighboursDirtyChunk(int, int);
+    void MarkExistingNeighboursDirtyBlock(int, int);
+    void RecreateChunk(int, int, int, EngineApi&);
     void CreateChunk(int, int, EngineApi&);
 
     bool HasDirtyChunks() { return dirtyChunks.size() != 0; }

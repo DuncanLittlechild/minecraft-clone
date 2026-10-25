@@ -12,7 +12,7 @@ void RerenderDirtyChunks(World& world, EngineApi& api)
 {
     for (auto& chunk : world.dirtyChunks)
     {
-        api.RerenderChunk(chunk->blocks, chunk->x, chunk->z, chunk->handle);
+        world.RecreateChunk(chunk->x, chunk->z, chunk->handle, api);
     }
 }
 
@@ -56,9 +56,10 @@ void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& 
 void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime, EngineApi& api)
 {
     UpdatePlayer(input, player, deltaTime, api);
-
+    int playerX {static_cast<int>(player.pos.x)};
+    int playerZ {static_cast<int>(player.pos.z)};
     // If there is no chunk at the player position, spawn one in
-    if(world.GetChunkSafe(player.pos) == nullptr)
+    if(world.GetChunkSafe(playerX, playerZ) == nullptr)
     {
         world.CreateChunk(player.pos.x, player.pos.z, api);
     }
@@ -100,8 +101,8 @@ void GameInitFn(GameMemory& memory, EngineApi& api)
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     new (data) GameData{};
-    data->player.pos = {8.0f, 256.f, 8.0f};
-    data->player.target = {9.0f, 256.f, 9.0f};
+    data->player.pos = {8.0f, 258.f, 8.0f};
+    data->player.target = {9.0f, 258.f, 9.0f};
     data->player.Init(api);
 }
 

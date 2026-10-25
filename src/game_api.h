@@ -6,6 +6,20 @@
 #include <cstddef>
 #include <cstdint>
 
+
+enum Direction {
+    DIRECTION_NORTH,  // -z
+    DIRECTION_SOUTH,  // +z
+    DIRECTION_EAST,   // +x
+    DIRECTION_WEST,   // -x
+    DIRECTION_CARDINAL_MAX,
+    DIRECTION_UP = DIRECTION_CARDINAL_MAX,     // +y
+    DIRECTION_DOWN,   // -y
+    DIRECTION_MAX,
+    DIRECTION_MIN = 0
+};
+
+
 namespace BlockType{
     enum Type : uint32_t {
         DIRT,
@@ -17,16 +31,29 @@ namespace BlockType{
     };
 }
 
-struct SpriteRenderData {
-    enum Type {
-        BLOCK,
-        CHUNK
-    } type{};
-    float x{.0f}, y{.0f}, z{.0f}; // Position
-    float scale{.0f}; // size relative to the basic mesh size
-    uint32_t atlasHandle{0};
-    uint8_t colourHandle{0};
-    uint8_t layer{0};
+using Block = BlockType::Type;
+
+struct EngineApi {
+    int (*GetChunkHandle)(
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ
+    );
+    void (*DrawChunk)(int);
+    void (*RerenderChunk)(
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ,
+        int handle
+    );
+    // MUST be called before game start, as also initialises camera matrices
+    void (*SyncCameraToPlayer)(const Matrix4x4&);
 };
 
 struct UserInput {
@@ -54,14 +81,6 @@ struct UserInput {
     float mYAbs{.0f};
     float mXRel{.0f};
     float mYRel{.0f};
-};
-
-struct EngineApi {
-    int (*GetChunkHandle)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
-    void (*DrawChunk)(int);
-    void (*RerenderChunk)(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int cX, int cZ, int handle);
-    // MUST be called before game start, as also initialises camera matrices
-    void (*SyncCameraToPlayer)(const Matrix4x4&);
 };
 
 struct GameMemory {

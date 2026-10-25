@@ -454,8 +454,8 @@ bool GPU_Create::BlockPipeline(SDL_GPUGraphicsPipeline** pipeline, SDL_GPUDevice
             // Filled in or drawn as lines (wireframe)
             .fill_mode = SDL_GPU_FILLMODE_FILL,
             // Which side is culled, if any. Defaults to none
-            .cull_mode = SDL_GPU_CULLMODE_BACK,
-            .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
+           // .cull_mode = SDL_GPU_CULLMODE_BACK,
+            //.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
         },
         .depth_stencil_state = {
             // Checks to see if something has a lower depth value, and keeps that.

@@ -40,9 +40,24 @@ namespace Renderer {
 
     SDL_GPUDevice* GetGPURenderingDevice();
 
-    int GetChunkHandle(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int);
+    int GetChunkHandle(
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ
+    );
 
-    void RerenderChunk(BlockType::Type[CHUNKX][CHUNKY][CHUNKZ], int, int, int);
+    void RerenderChunk(
+        Block main[CHUNKX][CHUNKY][CHUNKZ], 
+        Block n[CHUNKX][CHUNKY][CHUNKZ], 
+        Block s[CHUNKX][CHUNKY][CHUNKZ], 
+        Block e[CHUNKX][CHUNKY][CHUNKZ], 
+        Block w[CHUNKX][CHUNKY][CHUNKZ], 
+        int cX, int cZ,
+        int handle
+    );
 }
 
 // Included here because Renderer.cpp owns the camera
