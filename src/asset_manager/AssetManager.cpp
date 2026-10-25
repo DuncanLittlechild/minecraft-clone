@@ -102,7 +102,8 @@ LOCAL void CreateChunkMesh(
                            && s[x][y][0] != BlockType::NOBLOCK)
                             continue;
                     }
-                    else if(nPos[1] >= 0 && nPos[1] < CHUNKY && main[nPos[0]][nPos[1]][nPos[2]] != BlockType::NOBLOCK )
+                    
+                    if(nPos[0] >= 0 && nPos[0] < CHUNKX && nPos[1] >= 0 && nPos[1] < CHUNKY && nPos[2] >= 0 && nPos[2] < CHUNKZ && main[nPos[0]][nPos[1]][nPos[2]] != BlockType::NOBLOCK )
                         continue;
                     // If the face is visible, modify it and add it to cMesh.
                     Mesh tmp{

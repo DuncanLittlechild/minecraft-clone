@@ -5,11 +5,13 @@
 #include "game_api.h"
 #include "imgui_global.h"
 #include <array>
+#include <cmath>
 // When anded with a world coordinate, this returns the index of the
 // chunk which contains said coordinate
 // this is a bit of a load-bearing calculation - if this is slightly off,
 // the chunk coordinate system will fail and thus everything will fail
 LOCAL constexpr int CHUNKPOSMASK {~0b1111};
+LOCAL constexpr int BLOCKPOSMASK {0b1111};
 
 // Stores x and z offsets needed to get the chunk in that direction
 LOCAL constexpr std::array<int[2], DIRECTION_CARDINAL_MAX> CHUNKOFFSET{{
@@ -31,30 +33,38 @@ LOCAL constexpr std::array<int[2], DIRECTION_CARDINAL_MAX> BLOCKOFFSET{{
 
 
 
-GameChunk* World::GetChunkSafe(int x, int z)
+GameChunk* World::GetChunkSafe(int gX, int gZ)
 {
-    int cCoords[2] {x & CHUNKPOSMASK, z & CHUNKPOSMASK};
-    if(chunks.contains({cCoords[0],cCoords[1]}))
-        return &chunks[{cCoords[0], cCoords[1]}];
+    int cX {gX & CHUNKPOSMASK};
+    int cZ {gZ & CHUNKPOSMASK};
+    if(chunks.contains({cX,cZ}))
+        return &chunks[{cX, cZ}];
     else
         return nullptr;
 }
 
-GameChunk& World::GetChunkUnsafe(int x, int z)
+GameChunk& World::GetChunkUnsafe(int gX, int gZ)
 {
-    int cCoords[2] {x & CHUNKPOSMASK, z & CHUNKPOSMASK};
-    return chunks[{cCoords[0], cCoords[1]}];
+    int cX {gX & CHUNKPOSMASK};
+    int cZ {gZ & CHUNKPOSMASK};
+    int cCoords[2] {cX & CHUNKPOSMASK, cZ & CHUNKPOSMASK};
+    return chunks[{cX, cZ}];
 }
 
 BlockType::Type* World::GetBlockSafe(const Vector3& coord)
 {
-    int cCoords[2] {(int)coord.x & CHUNKPOSMASK, (int)coord.z & CHUNKPOSMASK};
-    if(!(chunks.contains({cCoords[0],cCoords[1]})))
+    int gX {static_cast<int>(std::floor(coord.x))};
+    int y {static_cast<int>(std::floor(coord.y))};
+    int gZ {static_cast<int>(std::floor(coord.z))};
+
+    int cX {gX & CHUNKPOSMASK};
+    int cZ {gZ & CHUNKPOSMASK};
+
+    if(!(chunks.contains({cX,cZ})))
         return nullptr;
-    GameChunk* chunk {&chunks.at({cCoords[0],cCoords[1]})};
-    int x {static_cast<int>(coord.x - cCoords[0])};
-    int y {static_cast<int>(coord.y)};
-    int z {static_cast<int>(coord.z - cCoords[1])};
+    GameChunk* chunk {&chunks.at({cX, cZ})};
+    int x {gX - cX};
+    int z {gZ - cZ};
 
     if(chunk != nullptr 
         && x >= 0 && x < CHUNKX && y >= 0 && y < CHUNKY && z >= 0 && z < CHUNKZ)
@@ -69,11 +79,16 @@ BlockType::Type* World::GetBlockSafe(const Vector3& coord)
 
 BlockType::Type& World::GetBlockUnsafe(const Vector3& coord)
 {
-    int cCoords[2] {(int)coord.x & CHUNKPOSMASK, (int)coord.z & CHUNKPOSMASK};
-    GameChunk& chunk {chunks[{cCoords[0],cCoords[1]}]};
-    int x {static_cast<int>(coord.x - cCoords[0])};
-    int y {static_cast<int>(coord.y)};
-    int z {static_cast<int>(coord.z - cCoords[1])};
+    int gX {static_cast<int>(std::floor(coord.x))};
+    int y {static_cast<int>(std::floor(coord.y))};
+    int gZ {static_cast<int>(std::floor(coord.z))};
+
+    int cX {gX & CHUNKPOSMASK};
+    int cZ {gZ & CHUNKPOSMASK};
+
+    GameChunk& chunk {chunks[{cX,cZ}]};
+    int x {gX - cX};
+    int z {gZ - cZ};
     return chunk.blocks[x][y][z];
 }
 
@@ -83,11 +98,11 @@ void World::MarkChunkDirty(GameChunk& chunk)
 }
 
 
-void World::MarkExistingNeighboursDirtyChunk(int x, int z)
+void World::MarkExistingNeighboursDirtyChunk(int cX, int cZ)
 {
     for (auto& offset : CHUNKOFFSET)
     {
-        GameChunk* chunk {GetChunkSafe(offset[0] + x, offset[1] + z)};
+        GameChunk* chunk {GetChunkSafe(offset[0] + cX, offset[1] + cZ)};
         if(chunk != nullptr)
         {
             MarkChunkDirty(*chunk);
@@ -95,11 +110,16 @@ void World::MarkExistingNeighboursDirtyChunk(int x, int z)
     }
 }
 
-void World::MarkExistingNeighboursDirtyBlock(int x, int z)
+void World::MarkExistingNeighboursDirtyBlock(int gX, int gZ)
 {
+    int x {gX & BLOCKPOSMASK};
+    int z {gZ & BLOCKPOSMASK};
     if(x == 0)
     {
-        GameChunk* w {GetChunkSafe(x, z)};
+        GameChunk* w {GetChunkSafe(
+            gX + BLOCKOFFSET[DIRECTION_WEST][0],
+            gZ + BLOCKOFFSET[DIRECTION_WEST][1]
+            )};
         if(w != nullptr)
         {
             MarkChunkDirty(*w);
@@ -107,7 +127,10 @@ void World::MarkExistingNeighboursDirtyBlock(int x, int z)
     }
     else if(x == (CHUNKX - 1))
     {
-        GameChunk* e {GetChunkSafe(x, z)};
+        GameChunk* e {GetChunkSafe(            
+            gX + BLOCKOFFSET[DIRECTION_EAST][0],
+            gZ + BLOCKOFFSET[DIRECTION_EAST][1]
+        )};
         if(e != nullptr)
         {
             MarkChunkDirty(*e);
@@ -115,7 +138,10 @@ void World::MarkExistingNeighboursDirtyBlock(int x, int z)
     }
     if(z == 0)
     {
-        GameChunk* n {GetChunkSafe(x, z)};
+        GameChunk* n {GetChunkSafe(            
+            gX + BLOCKOFFSET[DIRECTION_NORTH][0],
+            gZ + BLOCKOFFSET[DIRECTION_NORTH][1]
+        )};
         if(n != nullptr)
         {
             MarkChunkDirty(*n);
@@ -123,7 +149,10 @@ void World::MarkExistingNeighboursDirtyBlock(int x, int z)
     }
     else if(z == CHUNKZ - 1)
     {
-        GameChunk* s {GetChunkSafe(x, z)};
+        GameChunk* s {GetChunkSafe(            
+            gX + BLOCKOFFSET[DIRECTION_SOUTH][0],
+            gZ + BLOCKOFFSET[DIRECTION_SOUTH][1]
+        )};
         if(s != nullptr)
         {
             MarkChunkDirty(*s);
@@ -133,7 +162,9 @@ void World::MarkExistingNeighboursDirtyBlock(int x, int z)
 
 void World::DestroyBlockSafe(const Vector3& block)
 {
-    GameChunk* hostChunk{GetChunkSafe(static_cast<int>(block.x), static_cast<int>(block.z))};
+    int x {static_cast<int>(std::floor(block.x))};
+    int z {static_cast<int>(std::floor(block.z))};
+    GameChunk* hostChunk{GetChunkSafe(x, z)};
     if(hostChunk == nullptr)
         return;
     BlockType::Type* bType {GetBlockSafe(block)};
@@ -142,19 +173,19 @@ void World::DestroyBlockSafe(const Vector3& block)
     *bType = BlockType::NOBLOCK;
     // TODO: mark neighbouring chunks as dirty if needed
     MarkChunkDirty(*hostChunk);
-    //MarkExistingNeighboursDirtyBlock(block.x, block.z);
+    MarkExistingNeighboursDirtyBlock(x, z);
 }
 
 void World::DestroyBlockUnsafe(const Vector3& block)
 {
-    GameChunk& hostChunk {GetChunkUnsafe(static_cast<int>(block.x), static_cast<int>(block.z))};
+    int x {static_cast<int>(std::floor(block.x))};
+    int z {static_cast<int>(std::floor(block.z))};
+    GameChunk& hostChunk {GetChunkUnsafe(x, z)};
     BlockType::Type& bType {GetBlockUnsafe(block)};
     bType = BlockType::NOBLOCK;
-    int x {static_cast<int>(block.x)};
-    int z {static_cast<int>(block.z)};
 
     MarkChunkDirty(hostChunk);
-    //MarkExistingNeighboursDirtyBlock(block.x, block.z);
+    MarkExistingNeighboursDirtyBlock(x, z);
 }
 
 LOCAL void GetChunkNeighbours(int x, int z,

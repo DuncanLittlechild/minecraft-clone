@@ -13,7 +13,7 @@ LOCAL constexpr float RAYINCREMENT{0.1f};
 std::optional<Vector3> GetCoordinatesOfFirstBlockInRangeSafe(World& world, Player& player, float range)
 {
     // Create a ray going out of the player in the direction faced
-    Ray ray {player.pos,player.target};
+    Ray ray {player.pos, player.target};
 
     float distanceMoved {0.0f};
     bool insideBlock {false};

@@ -1,4 +1,5 @@
 #include "SDL3/SDL_init.h"
+#include "SDL3/SDL_video.h"
 #include <SDL3/SDL.h>
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL_main.h>
@@ -20,6 +21,9 @@ LOCAL Uint64 g_lastTime {0};
 
 LOCAL constexpr int INITIALWIDTH{1280};
 LOCAL constexpr int INITIALHEIGHT{720};
+
+LOCAL double TIME_COUNTER{0.0};
+LOCAL double FRAME_COUNT{0.0};
 
 
 void InitEngineApi()
@@ -48,6 +52,9 @@ bool InitWindow()
 
     SDL_ShowWindow(g_window);
     SDL_RaiseWindow(g_window);
+
+    // Allow fp[s style mouse movement
+    SDL_SetWindowRelativeMouseMode(g_window, true);
     return true;
 }
 
@@ -91,6 +98,17 @@ SDL_AppResult SDL_AppIterate(void* appstate){
     Uint64 currentTime {SDL_GetPerformanceCounter()};
     double deltaTime {(currentTime - g_lastTime) / (double)SDL_GetPerformanceFrequency()};
     g_lastTime = currentTime;
+    TIME_COUNTER += deltaTime;
+    FRAME_COUNT += 1.0;
+    if(TIME_COUNTER >= 1.0)
+    {
+        FRAME_COUNT /= TIME_COUNTER;
+        char fpsCount[5];
+        sprintf(fpsCount, "%.2f", FRAME_COUNT);
+        SDL_SetWindowTitle(g_window, fpsCount);
+        FRAME_COUNT = 0.0;
+        TIME_COUNTER = 0.0;
+    }
 
     Imgui_Backend::SetupFrame();
 

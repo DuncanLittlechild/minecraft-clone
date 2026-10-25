@@ -19,7 +19,7 @@ SDL_AppResult HandleEvent(SDL_Event* event, UserInput& input)
         case (SDL_EVENT_QUIT) : {
             return SDL_APP_SUCCESS;
         } break;
-                case(SDL_EVENT_KEY_DOWN) :{
+            case(SDL_EVENT_KEY_DOWN) :{
             switch(event->key.scancode){
                 case (SDL_SCANCODE_W):{
                     input.keys |= UserInput::W_PRESSED;
@@ -45,6 +45,10 @@ SDL_AppResult HandleEvent(SDL_Event* event, UserInput& input)
                 case (SDL_SCANCODE_RIGHT):{
                     input.keys |= UserInput::RIGHT_PRESSED;
                 }break;
+                // For now, q quits the game
+                case(SDL_SCANCODE_Q):{
+                    return SDL_APP_SUCCESS;
+                };
             }
         } break;
         case(SDL_EVENT_KEY_UP) :{

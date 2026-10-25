@@ -11,7 +11,12 @@ void GameChunk::Init(int cX, int cZ, EngineApi& api)
         {
             for (int bZ {0}; bZ < CHUNKZ; ++bZ)
             {
-                blocks[bX][bY][bZ] = BlockType::DIRT;
+                Block blk {};
+                if((bX == 0 || bX == CHUNKX - 1) && (bZ ==0 || bZ == CHUNKZ - 1))
+                    blk = BlockType::STONE;
+                else
+                    blk =BlockType::DIRT;
+                blocks[bX][bY][bZ] = blk;
             }
         }
     }
