@@ -48,7 +48,7 @@ SDL_AppResult HandleEvent(SDL_Event* event, UserInput& input)
                 // For now, q quits the game
                 case(SDL_SCANCODE_Q):{
                     return SDL_APP_SUCCESS;
-                };
+                } break;
             }
         } break;
         case(SDL_EVENT_KEY_UP) :{

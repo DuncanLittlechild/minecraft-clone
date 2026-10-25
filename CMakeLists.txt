@@ -46,6 +46,7 @@ set(SDLTTF_HARFBUZZ OFF CACHE BOOL "Disables the Harfbuzz external dependency" F
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL3-3.4.12)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL3_ttf-3.2.2)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb_image)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/FastNoiseSIMD-0.7)
 
 # AS imgui has no cmake, it must be compiled and statically linked manually
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui")
@@ -172,6 +173,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         SDL3::SDL3
         SDL3_ttf::SDL3_ttf
         imgui_lib
+        fastNoiseSIMD
         stb_header
         stb_image
 )
