@@ -69,8 +69,6 @@ BlockType::Type* World::GetBlockSafe(const Vector3& coord)
     if(chunk != nullptr 
         && x >= 0 && x < CHUNKX && y >= 0 && y < CHUNKY && z >= 0 && z < CHUNKZ)
     {
-        // TODO: remove when target bug fixed
-        imGlob.lastRayBlock = {(float)x, (float)y, (float)z};
         return &chunk->blocks[x][y][z];
     }
     else
@@ -110,6 +108,7 @@ void World::MarkExistingNeighboursDirtyChunk(int cX, int cZ)
     }
 }
 
+// Marks all chunks which neighbour a destroyed or placed block as dirty
 void World::MarkExistingNeighboursDirtyBlock(int gX, int gZ)
 {
     int x {gX & BLOCKPOSMASK};

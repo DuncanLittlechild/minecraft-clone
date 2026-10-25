@@ -54,7 +54,7 @@ bool InitWindow()
     SDL_RaiseWindow(g_window);
 
     // Allow fp[s style mouse movement
-    SDL_SetWindowRelativeMouseMode(g_window, true);
+    //SDL_SetWindowRelativeMouseMode(g_window, true);
     return true;
 }
 

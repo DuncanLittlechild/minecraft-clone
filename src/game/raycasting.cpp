@@ -27,12 +27,6 @@ std::optional<Vector3> GetCoordinatesOfFirstBlockInRangeSafe(World& world, Playe
         }
         distanceMoved += RAYINCREMENT;
     } while (distanceMoved < range && !insideBlock);
-
-    // TODO: remove in final build
-    imGlob.lastRayStart = ray.origin;
-    imGlob.lastRayEnd = ray.pos;
-    imGlob.lastRayDir = ray.dir;
-
     if (insideBlock)
         return ray.pos;
     else

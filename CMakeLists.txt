@@ -48,7 +48,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL3_ttf-3.2.2)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb_image)
 
 # AS imgui has no cmake, it must be compiled and statically linked manually
-set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui-1.92.8")
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui")
 add_library(imgui_lib STATIC
        ${IMGUI_DIR}/imgui.cpp
        ${IMGUI_DIR}/imgui_draw.cpp
