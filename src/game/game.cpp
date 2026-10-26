@@ -71,10 +71,18 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
     // WHY
     if (input.mouse & UserInput::LEFT_CLICK)
     {
-        std::optional<Vector3> targetBlock{GetCoordinatesOfFirstBlockInRangeSafe(world, player, 10.0f)};
-        if(targetBlock)
+        Vector3 bPos;
+        if(GetCoordinatesOfFirstBlockInRangeSafe(world, player, 2.f, bPos))
         {
-            world.DestroyBlockUnsafe(targetBlock.value());
+            world.DestroyBlockUnsafe(bPos);
+        }
+        else
+        {
+            Block* support {world.GetBlockSafe({bPos.x, bPos.y - 1, bPos.z})};
+            if(support != nullptr && *support != BlockType::NOBLOCK)
+            {
+                world.PlaceBlockUnsafe(bPos, BlockType::DIRT);
+            }
         }
     }
 

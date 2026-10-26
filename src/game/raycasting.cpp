@@ -10,7 +10,7 @@ void Ray::Move(const float dist)
 }
 
 LOCAL constexpr float RAYINCREMENT{0.1f};
-std::optional<Vector3> GetCoordinatesOfFirstBlockInRangeSafe(World& world, Player& player, float range)
+bool GetCoordinatesOfFirstBlockInRangeSafe(World& world, Player& player, float range, Vector3& bPos)
 {
     // Create a ray going out of the player in the direction faced
     Ray ray {player.pos, player.target};
@@ -27,8 +27,6 @@ std::optional<Vector3> GetCoordinatesOfFirstBlockInRangeSafe(World& world, Playe
         }
         distanceMoved += RAYINCREMENT;
     } while (distanceMoved < range && !insideBlock);
-    if (insideBlock)
-        return ray.pos;
-    else
-        return std::nullopt;
+    bPos = std::move(ray.pos);
+    return insideBlock;
 }

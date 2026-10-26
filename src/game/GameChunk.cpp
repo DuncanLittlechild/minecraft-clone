@@ -1,5 +1,6 @@
 #include "GameChunk.h"
 #include "core/global_consts.h"
+#include "game_api.h"
 
 void GameChunk::Init(int cX, int cZ, EngineApi& api)
 {
@@ -12,7 +13,9 @@ void GameChunk::Init(int cX, int cZ, EngineApi& api)
             for (int bZ {0}; bZ < CHUNKZ; ++bZ)
             {
                 Block blk {};
-                if((bX == 0 || bX == CHUNKX - 1) && (bZ ==0 || bZ == CHUNKZ - 1))
+                if (bY > 250)
+                    blk = BlockType::NOBLOCK;
+                else if((bX == 0 || bX == CHUNKX - 1) && (bZ ==0 || bZ == CHUNKZ - 1))
                     blk = BlockType::STONE;
                 else
                     blk =BlockType::DIRT;

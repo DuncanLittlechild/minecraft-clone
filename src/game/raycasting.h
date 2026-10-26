@@ -22,6 +22,6 @@ struct Ray {
     void Move(const float);
 };
 
-std::optional<Vector3> GetCoordinatesOfFirstBlockInRangeSafe(World&,Player&,float);
+bool GetCoordinatesOfFirstBlockInRangeSafe(World&,Player&,float, Vector3&);
 
 #endif // DL_SDL3GPU_PROJECT_TEMPLATE_RAYCASTING_H

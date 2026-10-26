@@ -37,6 +37,8 @@ struct World {
     void DestroyBlockSafe(const Vector3&);
     void DestroyBlockUnsafe(const Vector3&);
 
+    void PlaceBlockUnsafe(const Vector3&, Block);
+
     void MarkExistingNeighboursDirtyChunk(int, int);
     void MarkExistingNeighboursDirtyBlock(int, int);
     void RecreateChunk(int, int, int, EngineApi&);
