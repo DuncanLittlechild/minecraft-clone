@@ -43,14 +43,19 @@ LOCAL void CreateChunkMesh(
 {
     // Modifies an inputted cube mesh to be in the position determined by both
     // the chunk's position and the cubes position within the chunk
-    auto ModifyFaceMesh {[cX, cZ](Mesh& mesh, int meshCount, Block bType, int x, int y, int z){
+    auto ModifyFaceMesh {[cX, cZ](Mesh& mesh, int meshCount, Block bType, Direction face, int x, int y, int z){
+        int textureIndex {};
+        if(MULTIFACEBLOCKS.contains(bType))
+            textureIndex = static_cast<int>(MULTIFACEBLOCKS[bType][face]);
+        else
+            textureIndex = static_cast<int>(bType);
         std::size_t indexInc {mesh.vertices.size() * meshCount};
         for(auto& vert : mesh.vertices)
         {
             vert.x += x + cX;
             vert.y += y;
             vert.z += z + cZ;
-            vert.d = static_cast<int>(bType);
+            vert.d = textureIndex;
         }
 
         for(auto& ind : mesh.indices)

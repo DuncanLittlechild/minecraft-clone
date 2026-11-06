@@ -25,6 +25,7 @@ namespace BlockType{
         DIRT,
         SAND,
         STONE,
+        GRASS,
         TYPE_COUNT,
         MIN_TYPE = 0,
         NOBLOCK

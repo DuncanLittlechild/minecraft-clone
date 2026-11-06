@@ -10,15 +10,6 @@
 #include "asset_manager/stb_utils.h"
 #include "asset_manager/Vertex.h"
 
-// This entire file is mostly functions which are currently just run at startup.
-
-constexpr std::array<const char*, BlockType::TYPE_COUNT>
-TEXTUREFILENAMES {{
-    RESOURCES_PATH "dirt.png",
-    RESOURCES_PATH "sand.png",
-    RESOURCES_PATH "stone.png"
-}};
-
 constexpr Uint32 BLOCKPIXELSIZE {16};
 constexpr Uint32 MAXBLOCKINSTANCES{100'000};
 
