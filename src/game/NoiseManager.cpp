@@ -11,8 +11,8 @@ void NoiseManager::Init(unsigned long& seed)
 
 void NoiseManager::SetBufferToChunkSIMDMap(float* buffer, int xStart, int yStart)
 {
-    worldHeightNoise->FillNoiseSet(buffer, xStart, yStart, 0, CHUNKX, CHUNKY, 1);
-    for (int i {0}; i < CHUNKX * CHUNKY; ++i)
+    worldHeightNoise->FillNoiseSet(buffer, xStart, yStart, 0, CHUNKX, CHUNKZ, 1);
+    for (int i {0}; i < CHUNKX * CHUNKZ; ++i)
     {
         buffer[i] = (buffer[i] + 1) / 2;
     }

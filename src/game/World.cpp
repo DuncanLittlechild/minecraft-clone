@@ -241,8 +241,8 @@ void World::CreateChunk(int x, int z, EngineApi& api)
     // Rounds to the nearest multiple of 16
     x &= CHUNKPOSMASK;
     z &= CHUNKPOSMASK;
-    float chunkNoise[CHUNKX*CHUNKY];
-    noiseManager.SetBufferChunkToSIMDMap(chunkNoise, x, y);
+    float chunkNoise[CHUNKX*CHUNKZ];
+    noiseManager.SetBufferChunkToSIMDMap(chunkNoise, x, z);
     chunks[{x,z}] = GameChunk{};
     chunks[{x,z}].Init(x, z, chunkNoise);
     // Get neighbours to the current chunk
