@@ -8,7 +8,7 @@ struct GameChunk {
     int x, z;
     bool dirty{false};
 
-    void Init(int, int, EngineApi&);
+    void Init(int, int, float*);
 };
 
 #endif // DL_SDL3GPU_PROJECT_TEMPLATE_GAMECHUNK_H

@@ -2,21 +2,24 @@
 #include "core/global_consts.h"
 #include "game_api.h"
 
-void GameChunk::Init(int cX, int cZ, EngineApi& api)
+void GameChunk::Init(int cX, int cZ, float* noiseMap)
 {
     x = cX;
     z = cZ;
+    int maxHeight {150};
+    int minHeight {50};
+    int hDiff {maxHeight - minHeight};
     for (int bX {0}; bX < CHUNKX; ++bX)
     {
         for (int bY {0}; bY < CHUNKY; ++bY)
         {
+            float noiseVal {noiseMap[bX * CHUNKY + bY]};
+            int height {static_cast<int>(hDiff * noiseVal + minHeight)};
             for (int bZ {0}; bZ < CHUNKZ; ++bZ)
             {
                 Block blk {};
-                if (bY > 250)
+                if (bY > height)
                     blk = BlockType::NOBLOCK;
-                else if((bX == 0 || bX == CHUNKX - 1) && (bZ ==0 || bZ == CHUNKZ - 1))
-                    blk = BlockType::STONE;
                 else
                     blk =BlockType::DIRT;
                 blocks[bX][bY][bZ] = blk;

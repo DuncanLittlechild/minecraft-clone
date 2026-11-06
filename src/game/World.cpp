@@ -31,7 +31,11 @@ LOCAL constexpr std::array<int[2], DIRECTION_CARDINAL_MAX> BLOCKOFFSET{{
 
 }};
 
-
+void World::Init(unsigned long seed)
+{
+    initialSeed = seed;
+    noiseManager.Init(seed);
+}
 
 GameChunk* World::GetChunkSafe(int gX, int gZ)
 {
@@ -237,8 +241,10 @@ void World::CreateChunk(int x, int z, EngineApi& api)
     // Rounds to the nearest multiple of 16
     x &= CHUNKPOSMASK;
     z &= CHUNKPOSMASK;
+    float chunkNoise[CHUNKX*CHUNKY];
+    noiseManager.SetBufferChunkToSIMDMap(chunkNoise, x, y);
     chunks[{x,z}] = GameChunk{};
-    chunks[{x,z}].Init(x, z, api);
+    chunks[{x,z}].Init(x, z, chunkNoise);
     // Get neighbours to the current chunk
     GameChunk *n, *s, *e, *w;
     GetChunkNeighbours(x, z, &n, &s, &e, &w, *this);

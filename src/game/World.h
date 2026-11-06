@@ -2,6 +2,7 @@
 #define DL_SDL3GPU_PROJECT_TEMPLATE_WORLD_H
 #include <unordered_map>
 #include <vector>
+#include "NoiseManager.h"
 #include "game_api.h"
 #include "game/GameChunk.h"
 #include "core/Matrix4x4.h"
@@ -25,6 +26,10 @@ struct World {
     // Int values in key are x and z coordinates respectively
     std::unordered_map<std::pair<int, int>, GameChunk, PairHash> chunks{};
     std::vector<GameChunk*> dirtyChunks{};
+    NoiseManager noiseManager{};
+    int initialSeed {};
+
+    void Init(unsigned long seed);
 
     GameChunk* GetChunkSafe(const int x, const int z);
     GameChunk& GetChunkUnsafe(const int x, const int z);

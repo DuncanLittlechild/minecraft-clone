@@ -112,6 +112,7 @@ void GameInitFn(GameMemory& memory, EngineApi& api)
     data->player.pos = {8.0f, 258.f, 8.0f};
     data->player.target = {9.0f, 258.f, 9.0f};
     data->player.Init(api);
+    data->world.Init(1);
 }
 
 void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float deltaTime, bool skipRender)
