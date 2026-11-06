@@ -11,7 +11,7 @@ void GameChunk::Init(int cX, int cZ, float* noiseMap)
     int hDiff {maxHeight - minHeight};
     for (int bX {0}; bX < CHUNKX; ++bX)
     {
-        for (int bZ {0}; bZ < CHNUKZ; ++bZ)
+        for (int bZ {0}; bZ < CHUNKZ; ++bZ)
         {
             float noiseVal {noiseMap[bX * CHUNKZ + bZ]};
             int height {static_cast<int>(hDiff * noiseVal + minHeight)};
