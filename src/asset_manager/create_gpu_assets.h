@@ -36,7 +36,7 @@ TEXTUREFILENAMES {{
 
 
 // Block types which need different textures for different faces ought be recorded here
-constexpr std::unordered_map<BlockType::Type, std::unordered_map<Direction, uint32_t>>
+const std::unordered_map<BlockType::Type, std::unordered_map<Direction, uint32_t>>
 MULTIFACEBLOCKS {
     {BlockType::GRASS, std::unordered_map<Direction, uint32_t>{
         {DIRECTION_UP, FaceType::GRASS_UP},

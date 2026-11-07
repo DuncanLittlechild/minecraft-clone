@@ -46,7 +46,7 @@ LOCAL void CreateChunkMesh(
     auto ModifyFaceMesh {[cX, cZ](Mesh& mesh, int meshCount, Block bType, Direction face, int x, int y, int z){
         int textureIndex {};
         if(MULTIFACEBLOCKS.contains(bType))
-            textureIndex = static_cast<int>(MULTIFACEBLOCKS[bType][face]);
+            textureIndex = static_cast<int>(MULTIFACEBLOCKS.at(bType).at(face));
         else
             textureIndex = static_cast<int>(bType);
         std::size_t indexInc {mesh.vertices.size() * meshCount};
@@ -115,7 +115,7 @@ LOCAL void CreateChunkMesh(
                         .vertices {CUBEVERTICES[face].begin(), CUBEVERTICES[face].end()},
                         .indices {CUBEFACEINDICES.begin(), CUBEFACEINDICES.end()}
                     };
-                    ModifyFaceMesh(tmp, meshCount++, bType, x, y, z);
+                    ModifyFaceMesh(tmp, meshCount++, bType, face, x, y, z);
                     cMesh.vertices.append_range(tmp.vertices);
                     cMesh.indices.append_range(tmp.indices);       
                 }

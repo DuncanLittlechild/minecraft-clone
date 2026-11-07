@@ -244,7 +244,7 @@ bool GPU_Create::TextureArray(SDL_GPUDevice* device, SDL_GPUTexture** dst)
         .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
         .width = BLOCKPIXELSIZE,
         .height = BLOCKPIXELSIZE,
-        .layer_count_or_depth = BlockType::TYPE_COUNT,
+        .layer_count_or_depth = FaceType::TYPE_COUNT,
         .num_levels = 1,
     };
     *dst = SDL_CreateGPUTexture(device, &textureInfo);
@@ -253,12 +253,12 @@ bool GPU_Create::TextureArray(SDL_GPUDevice* device, SDL_GPUTexture** dst)
     Uint32 imageSize = BLOCKPIXELSIZE * BLOCKPIXELSIZE * 4;
     SDL_GPUTransferBufferCreateInfo tBuffCreateInfo {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = imageSize * BlockType::TYPE_COUNT
+        .size = imageSize * FaceType::TYPE_COUNT
     };
     SDL_GPUTransferBuffer* textureTransferBuffer {SDL_CreateGPUTransferBuffer(device, &tBuffCreateInfo)};
     Uint8* pixelTransfer {static_cast<Uint8*>(SDL_MapGPUTransferBuffer(device, textureTransferBuffer, true))};
 
-    for(auto i {0uz}; i < BlockType::TYPE_COUNT; ++i)
+    for(auto i {0uz}; i < FaceType::TYPE_COUNT; ++i)
     {
         SDL_Surface* surface {STB_Utils::LoadImage(TEXTUREFILENAMES[i], 4)};
         SDL_memcpy(pixelTransfer + i * imageSize, surface->pixels, imageSize);
@@ -269,7 +269,7 @@ bool GPU_Create::TextureArray(SDL_GPUDevice* device, SDL_GPUTexture** dst)
     // Begin copy pass
     SDL_GPUCommandBuffer* cmdBuff {SDL_AcquireGPUCommandBuffer(device)};
     SDL_GPUCopyPass* copyPass {SDL_BeginGPUCopyPass(cmdBuff)};
-    for(auto i {0uz}; i < BlockType::TYPE_COUNT; ++i)
+    for(auto i {0uz}; i < FaceType::TYPE_COUNT; ++i)
     {   
         SDL_GPUTextureTransferInfo transferBufferLocation{
             .transfer_buffer = textureTransferBuffer,

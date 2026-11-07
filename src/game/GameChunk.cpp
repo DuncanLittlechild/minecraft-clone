@@ -20,6 +20,8 @@ void GameChunk::Init(int cX, int cZ, float* noiseMap)
                 Block blk {};
                 if (bY > height)
                     blk = BlockType::NOBLOCK;
+                else if (bY == height)
+                    blk = BlockType::GRASS;
                 else
                     blk =BlockType::DIRT;
                 blocks[bX][bY][bZ] = blk;

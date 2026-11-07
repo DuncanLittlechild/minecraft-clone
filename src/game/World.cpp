@@ -242,7 +242,7 @@ void World::CreateChunk(int x, int z, EngineApi& api)
     x &= CHUNKPOSMASK;
     z &= CHUNKPOSMASK;
     float chunkNoise[CHUNKX*CHUNKZ];
-    noiseManager.SetBufferChunkToSIMDMap(chunkNoise, x, z);
+    noiseManager.SetBufferToChunkSIMDMap(chunkNoise, x, z);
     chunks[{x,z}] = GameChunk{};
     chunks[{x,z}].Init(x, z, chunkNoise);
     // Get neighbours to the current chunk

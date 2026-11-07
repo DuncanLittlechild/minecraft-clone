@@ -109,8 +109,8 @@ void GameInitFn(GameMemory& memory, EngineApi& api)
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     new (data) GameData{};
-    data->player.pos = {8.0f, 258.f, 8.0f};
-    data->player.target = {9.0f, 258.f, 9.0f};
+    data->player.pos = {8.0f, 158.f, 8.0f};
+    data->player.target = {9.0f, 158.f, 9.0f};
     data->player.Init(api);
     data->world.Init(1);
 }
