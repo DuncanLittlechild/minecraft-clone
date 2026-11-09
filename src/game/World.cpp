@@ -261,3 +261,12 @@ void World::CreateChunk(int x, int z, EngineApi& api)
     // Mark neighbouring chunks as dirty, if they exist
     MarkExistingNeighboursDirtyChunk(x, z);
 }
+
+void World::Update(EngineApi& api)
+{
+    if(chunkSpawnQueue.size() > 0)
+    {
+        CreateChunk(chunkSpawnQueue[0].first, chunkSpawnQueue[0].second, api);
+        chunkSpawnQueue.pop_front();
+    }    
+}

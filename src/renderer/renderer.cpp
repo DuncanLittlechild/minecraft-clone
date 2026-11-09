@@ -195,6 +195,7 @@ void Renderer::RenderGame(ImGuiContext* context)
 
 
 SDL_GPUDevice* Renderer::GetGPURenderingDevice() { return g_renderDevice; }
+Camera3d* Renderer::GetGameCamera() { return &g_camera; }
 
 int Renderer::GetChunkHandle(
         Block main[CHUNKX][CHUNKY][CHUNKZ], 

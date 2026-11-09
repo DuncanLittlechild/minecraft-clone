@@ -1,5 +1,6 @@
 #ifndef DL_SDL3GPU_PROJECT_TEMPLATE_WORLD_H
 #define DL_SDL3GPU_PROJECT_TEMPLATE_WORLD_H
+#include <deque>
 #include <unordered_map>
 #include <vector>
 #include "NoiseManager.h"
@@ -26,6 +27,7 @@ struct World {
     // Int values in key are x and z coordinates respectively
     std::unordered_map<std::pair<int, int>, GameChunk, PairHash> chunks{};
     std::vector<GameChunk*> dirtyChunks{};
+    std::deque<std::pair<int, int>> chunkSpawnQueue{};
     NoiseManager noiseManager{};
     int initialSeed {};
 
@@ -48,6 +50,10 @@ struct World {
     void MarkExistingNeighboursDirtyBlock(int, int);
     void RecreateChunk(int, int, int, EngineApi&);
     void CreateChunk(int, int, EngineApi&);
+
+    void ProcessSpawnQueue();
+
+    void Update(EngineApi&);
 
     bool HasDirtyChunks() { return dirtyChunks.size() != 0; }
     void ClearDirtyChunks() { dirtyChunks.resize(0); }

@@ -12,6 +12,8 @@ struct Player {
 	Vector3 pos{0.0f, .0f, 0.0f};
 	Vector3 target{.0f, .0f, .0f};
     Matrix4x4 viewMat{};
+    float speed{0.0f};
+    float rSpeed{0.0f};
     uint8_t flags{0};
     void UpdateViewMat();
 

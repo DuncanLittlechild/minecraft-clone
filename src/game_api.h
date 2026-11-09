@@ -55,6 +55,7 @@ struct EngineApi {
     );
     // MUST be called before game start, as also initialises camera matrices
     void (*SyncCameraToPlayer)(const Matrix4x4&);
+    void (*ToggleRelativeMouse)();
 };
 
 struct UserInput {
@@ -69,6 +70,7 @@ struct UserInput {
         LEFT_PRESSED = 0x00'20,
         RIGHT_PRESSED = 0x00'40,
         DOWN_PRESSED = 0x00'80,
+        R_PRESSED = 0x01'00
     };
     enum Mouse : MType {
         LEFT_CLICK = 0x01,

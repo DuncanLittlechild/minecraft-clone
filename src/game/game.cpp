@@ -8,6 +8,8 @@
 
 std::size_t GetGameDataSizeFn() { return sizeof(GameData); }
 
+bool menuMode {true};
+
 void RerenderDirtyChunks(World& world, EngineApi& api)
 {
     for (auto& chunk : world.dirtyChunks)
@@ -16,15 +18,25 @@ void RerenderDirtyChunks(World& world, EngineApi& api)
     }
 }
 
+
+void UpdateSettings(UserInput& input, EngineApi& api)
+{
+    if(input.keys & UserInput::R_PRESSED)
+    {
+        api.ToggleRelativeMouse();
+        menuMode = !menuMode;
+        input.keys &= ~UserInput::R_PRESSED;
+    }
+}
 // If an input was pushed which would move the player, return true to signal the main loop to update the camera.
 void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& api)
 {
-    static float movFactor {2.0f};
     float xMov {0.0f};
     float zMov{0.0f};
     float xCamMov{0.0f};
     float yCamMov{0.0f};
-    float camChange = movFactor * deltaTime;
+    float camChange = player.speed * deltaTime;
+    float camSense = player.rSpeed * deltaTime;
     if(input.keys & UserInput::W_PRESSED)
     {
         zMov -= camChange;
@@ -41,7 +53,7 @@ void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& 
     {
         xMov += camChange;
     }   
-    if(input.mouse & UserInput::MOUSE_MOVED)
+    if(input.mouse & UserInput::MOUSE_MOVED && !menuMode)
     {
         yCamMov = camChange * -input.mYRel;
         xCamMov = camChange * input.mXRel;
@@ -53,9 +65,8 @@ void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& 
     }
 }
 
-void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime, EngineApi& api)
+void PopulateChunks(Player& player, World& world, EngineApi& api)
 {
-    UpdatePlayer(input, player, deltaTime, api);
     int playerX {static_cast<int>(player.pos.x)};
     int playerZ {static_cast<int>(player.pos.z)};
     // If there is no chunk at the player position, spawn one in
@@ -63,6 +74,15 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
     {
         world.CreateChunk(player.pos.x, player.pos.z, api);
     }
+}
+
+void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime, EngineApi& api)
+{
+    UpdatePlayer(input, player, deltaTime, api);
+    world.Update(api);
+    UpdateSettings(input, api);
+
+    PopulateChunks(player, world, api);
     
     // This half works, but the block destroyed isn't the one in front of the player
     // It's always slightly off to one side or another,
@@ -104,16 +124,6 @@ void RenderGame(World& world, EngineApi& api)
     }
 }
 
-
-void GameInitFn(GameMemory& memory, EngineApi& api)
-{
-    GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
-    new (data) GameData{};
-    data->player.pos = {8.0f, 158.f, 8.0f};
-    data->player.target = {9.0f, 158.f, 9.0f};
-    data->player.Init(api);
-    data->world.Init(1);
-}
 
 void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float deltaTime, bool skipRender)
 {

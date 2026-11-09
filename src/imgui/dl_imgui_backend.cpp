@@ -4,6 +4,8 @@
 #include "imgui_impl_sdlgpu3.h"
 #include "core/global_consts.h"
 #include "imgui_internal.h"
+#include "renderer/Camera3d.h"
+#include "renderer/renderer.h"
 
 LOCAL ImDrawData* g_drawData{nullptr};
 
@@ -22,7 +24,7 @@ void Imgui_Backend::Init(SDL_GPUDevice* device, SDL_Window* window)
 
     // Enable keyboard navigation in imgui
     ImGuiIO& io {ImGui::GetIO()};
-    io.FontGlobalScale = 2;
+    //io.FontGlobalScale = 2;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     // Initialise ImGui globals for SDL
@@ -50,7 +52,16 @@ void Imgui_Backend::SetupFrame()
 
 void Imgui_Backend::Prepare(SDL_GPUCommandBuffer* commandBuffer, ImGuiContext* context)
 {
+    Camera3d* cam {Renderer::GetGameCamera()};
+    float distTmp  = cam->far;
     ImGui::SetCurrentContext(context);
+    ImGui::Begin("Game stats");
+    ImGui::Text("FOV: %.2f", cam->fov);
+    if(ImGui::SliderFloat("Draw Dist", &distTmp, 50.0f, 500.0f))
+    {
+        cam->far = distTmp;
+    }
+    ImGui::End();
     ImGui::Render();
     g_drawData = ImGui::GetDrawData();
     ImGui_ImplSDLGPU3_PrepareDrawData(g_drawData, commandBuffer);

@@ -25,6 +25,13 @@ LOCAL constexpr int INITIALHEIGHT{720};
 LOCAL double TIME_COUNTER{0.0};
 LOCAL double FRAME_COUNT{0.0};
 
+void ToggleRelativeMouse()
+{
+    static bool relSet {true};
+    SDL_SetWindowRelativeMouseMode(g_window, relSet);
+    relSet = !relSet;
+}
+
 
 void InitEngineApi()
 {
@@ -32,6 +39,7 @@ void InitEngineApi()
     g_engineApi.DrawChunk = Renderer::DrawChunk;
     g_engineApi.RerenderChunk = Renderer::RerenderChunk;
     g_engineApi.SyncCameraToPlayer = SyncCameraToPlayer;
+    g_engineApi.ToggleRelativeMouse = ToggleRelativeMouse;
 }
 
 bool InitGameMemory()

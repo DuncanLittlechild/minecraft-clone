@@ -49,6 +49,9 @@ SDL_AppResult HandleEvent(SDL_Event* event, UserInput& input)
                 case(SDL_SCANCODE_Q):{
                     return SDL_APP_SUCCESS;
                 } break;
+                case (SDL_SCANCODE_R):{
+                    input.keys |= UserInput::R_PRESSED;
+                }break;
             }
         } break;
         case(SDL_EVENT_KEY_UP) :{

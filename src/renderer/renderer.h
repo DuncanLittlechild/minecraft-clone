@@ -1,5 +1,6 @@
 #ifndef DL_TEMPLATE_RENDERER_H
 #define DL_TEMPLATE_RENDERER_H
+#include "Camera3d.h"
 #include "SDL3/SDL_gpu.h"
 #include "game_api.h"
 #include "imgui_internal.h"
@@ -39,6 +40,7 @@ namespace Renderer {
     void RenderGame(ImGuiContext*);
 
     SDL_GPUDevice* GetGPURenderingDevice();
+    Camera3d* GetGameCamera();
 
     int GetChunkHandle(
         Block main[CHUNKX][CHUNKY][CHUNKZ], 
