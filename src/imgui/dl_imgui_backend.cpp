@@ -60,6 +60,8 @@ void Imgui_Backend::Prepare(SDL_GPUCommandBuffer* commandBuffer, ImGuiContext* c
     if(ImGui::SliderFloat("Draw Dist", &distTmp, 50.0f, 500.0f))
     {
         cam->far = distTmp;
+        cam->UpdateProjMat();
+        cam->UpdateVpMat();
     }
     ImGui::End();
     ImGui::Render();

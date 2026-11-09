@@ -4,6 +4,7 @@
 #include "core/Matrix4x4.h"
 #include "game_api.h"
 #include <cstdint>
+#include <algorithm>
 struct Player {
     static constexpr Vector3 worldUp {0.0f, 1.0f, 0.0f};
     enum Flags : uint8_t {
@@ -12,6 +13,10 @@ struct Player {
 	Vector3 pos{0.0f, .0f, 0.0f};
 	Vector3 target{.0f, .0f, .0f};
     Matrix4x4 viewMat{};
+    int xPlayerChunk {};
+    int zPlayerChunk{};
+    int xPrevPlayerChunk{};
+    int zPrevPlayerChunk{};
     float speed{0.0f};
     float rSpeed{0.0f};
     uint8_t flags{0};

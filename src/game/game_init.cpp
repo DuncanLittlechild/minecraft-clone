@@ -1,20 +1,23 @@
 #include "game_init.h"
 #include "World.h"
+#include "core/global_consts.h"
 #include "game/GameData.h"
 void InitialPopulateChunk(Player& player, World& world, EngineApi& api)
 {
+    static int chunkOffsetFactorX {9 * CHUNKX};
+    static int chunkOffsetFactorZ {9 * CHUNKZ};
     int playerX {static_cast<int>(player.pos.x)};
     int playerZ {static_cast<int>(player.pos.z)};
 
     // Get all coordinates in a 9x9 grid with the centre on the player
-    int xStart {playerX - 9};
-    int xEnd {playerX + 9};
-    int zStart {playerZ - 9};
-    int zEnd {playerZ + 9};
+    int xStart {playerX - chunkOffsetFactorX};
+    int xEnd {playerX + chunkOffsetFactorX};
+    int zStart {playerZ - chunkOffsetFactorZ};
+    int zEnd {playerZ + chunkOffsetFactorZ};
 
-    for (int x {xStart}; x < xEnd; ++x)
+    for (int x {xStart}; x <= xEnd; x += CHUNKX)
     {
-        for (int z {zStart}; z < zEnd; ++z)
+        for (int z {zStart}; z <= zEnd; z += CHUNKZ)
         {
             world.chunkSpawnQueue.emplace_back(x, z);
         }

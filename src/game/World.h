@@ -2,11 +2,15 @@
 #define DL_SDL3GPU_PROJECT_TEMPLATE_WORLD_H
 #include <deque>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include "NoiseManager.h"
 #include "game_api.h"
 #include "game/GameChunk.h"
 #include "core/Matrix4x4.h"
+
+// Finds the key for the chunk which the x and z coordinates are contained within
+void GetChunkKeys(int& x, int& z);
 
 // Functor used to hash the coordinate pair in unordered map
 struct PairHash{
@@ -28,6 +32,8 @@ struct World {
     std::unordered_map<std::pair<int, int>, GameChunk, PairHash> chunks{};
     std::vector<GameChunk*> dirtyChunks{};
     std::deque<std::pair<int, int>> chunkSpawnQueue{};
+    int pChunkX {};
+    int pChunkZ {};
     NoiseManager noiseManager{};
     int initialSeed {};
 

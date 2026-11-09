@@ -1,8 +1,10 @@
 #include "GameData.h"
+#include "World.h"
 #include "game_api.h"
 #include "imgui/dl_imgui_frontend.h"
 #include "game/GameChunk.h"
 #include "raycasting.h"
+#include <cmath>
 #include <optional>
 #include <vector>
 
@@ -62,17 +64,35 @@ void UpdatePlayer(UserInput& input, Player& player, float deltaTime, EngineApi& 
     {
         player.Update(xMov, zMov, xCamMov, yCamMov);
         api.SyncCameraToPlayer(player.viewMat);
+
+        // Check if the player has moved between chunks
+        player.xPrevPlayerChunk = player.xPlayerChunk;
+        player.zPrevPlayerChunk = player.zPlayerChunk;
+        player.xPlayerChunk = std::floor(player.pos.x);
+        player.zPlayerChunk = std::floor(player.pos.z);
+        GetChunkKeys(player.xPlayerChunk, player.zPlayerChunk);
     }
 }
 
 void PopulateChunks(Player& player, World& world, EngineApi& api)
 {
-    int playerX {static_cast<int>(player.pos.x)};
-    int playerZ {static_cast<int>(player.pos.z)};
-    // If there is no chunk at the player position, spawn one in
-    if(world.GetChunkSafe(playerX, playerZ) == nullptr)
+    static int chunkOffsetFactorX {9 * CHUNKX};
+    static int chunkOffsetFactorZ {9 * CHUNKZ};
+    // Get all coordinates in a 9x9 grid with the centre on the player
+    int xStart {player.xPlayerChunk - chunkOffsetFactorX};
+    int xEnd {player.xPlayerChunk + chunkOffsetFactorX};
+    int zStart {player.zPlayerChunk - chunkOffsetFactorZ};
+    int zEnd {player.zPlayerChunk + chunkOffsetFactorZ};
+
+    for (int x {xStart}; x <= xEnd; x += CHUNKX)
     {
-        world.CreateChunk(player.pos.x, player.pos.z, api);
+        for (int z {zStart}; z <= zEnd; z += CHUNKZ)
+        {
+            if(world.GetChunkSafe(x, z) == nullptr)
+            {
+                world.chunkSpawnQueue.emplace_back(x, z);
+            }
+        }
     }
 }
 
@@ -81,8 +101,10 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
     UpdatePlayer(input, player, deltaTime, api);
     world.Update(api);
     UpdateSettings(input, api);
-
-    PopulateChunks(player, world, api);
+    if(player.xPlayerChunk != player.xPrevPlayerChunk || player.zPlayerChunk != player.zPrevPlayerChunk)
+    {
+        PopulateChunks(player, world, api);
+    }
     
     // This half works, but the block destroyed isn't the one in front of the player
     // It's always slightly off to one side or another,

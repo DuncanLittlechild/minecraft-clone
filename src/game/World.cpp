@@ -6,6 +6,7 @@
 #include "imgui_global.h"
 #include <array>
 #include <cmath>
+#include <utility>
 // When anded with a world coordinate, this returns the index of the
 // chunk which contains said coordinate
 // this is a bit of a load-bearing calculation - if this is slightly off,
@@ -30,6 +31,12 @@ LOCAL constexpr std::array<int[2], DIRECTION_CARDINAL_MAX> BLOCKOFFSET{{
     {-1, 0}
 
 }};
+
+void GetChunkKeys(int& x, int& z)
+{
+    x &= CHUNKPOSMASK;
+    z &= CHUNKPOSMASK;
+}
 
 void World::Init(unsigned long seed)
 {
@@ -239,8 +246,8 @@ void World::RecreateChunk(int x, int z, int handle, EngineApi& api)
 void World::CreateChunk(int x, int z, EngineApi& api)
 {
     // Rounds to the nearest multiple of 16
-    x &= CHUNKPOSMASK;
-    z &= CHUNKPOSMASK;
+    GetChunkKeys(x, z);
+
     float chunkNoise[CHUNKX*CHUNKZ];
     noiseManager.SetBufferToChunkSIMDMap(chunkNoise, x, z);
     chunks[{x,z}] = GameChunk{};
@@ -270,3 +277,4 @@ void World::Update(EngineApi& api)
         chunkSpawnQueue.pop_front();
     }    
 }
+
