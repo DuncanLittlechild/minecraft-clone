@@ -6,6 +6,7 @@
 
 #include "game_api.h"
 #include "core/global_consts.h"
+#include "core/dl_rand.hpp"
 #include "renderer/renderer.h"
 #include "imgui/dl_imgui_backend.h"
 #include "host/event_handler.h"
@@ -93,6 +94,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     Imgui_Backend::Init(Renderer::GetGPURenderingDevice(), g_window);
 
     GameInitFn(g_gameMemory, g_engineApi);
+
+   // DL_Rand::Init(DL_Rand::SET, g_gameMemory.seed);
 
     return SDL_APP_CONTINUE;
 }

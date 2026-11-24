@@ -275,6 +275,11 @@ void World::Update(EngineApi& api)
     {
         CreateChunk(chunkSpawnQueue[0].first, chunkSpawnQueue[0].second, api);
         chunkSpawnQueue.pop_front();
-    }    
+    }  
+    if (HasDirtyChunks())
+    {
+        RecreateChunk(dirtyChunks[0]->x, dirtyChunks[0]->z, dirtyChunks[0]->handle, api);
+        dirtyChunks.pop_front();
+    }  
 }
 

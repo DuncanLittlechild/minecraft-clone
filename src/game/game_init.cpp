@@ -33,7 +33,7 @@ void GameInitFn(GameMemory& memory, EngineApi& api)
     data->player.speed = 2.0f;
     data->player.rSpeed = 2.0f;
     data->player.Init(api);
-    data->world.Init(5);
+    data->world.Init(memory.seed);
     InitialPopulateChunk(data->player, data->world, api);
 };
 

@@ -127,15 +127,6 @@ void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime,
             }
         }
     }
-
-    // This works well
-    // Good code.
-    // Well done
-    if(world.HasDirtyChunks())
-    {
-        RerenderDirtyChunks(world, api);
-        world.ClearDirtyChunks();
-    }
 }
 
 void RenderGame(World& world, EngineApi& api)

@@ -26,6 +26,7 @@ namespace BlockType{
         SAND,
         STONE,
         GRASS,
+        LOG,
         TYPE_COUNT,
         MIN_TYPE = 0,
         NOBLOCK
@@ -87,6 +88,7 @@ struct UserInput {
 };
 
 struct GameMemory {
+    int seed {5};
     std::size_t gameDataSize{0};
     void* gameData{nullptr};
 

@@ -20,6 +20,8 @@ namespace FaceType{
         STONE,
         GRASS_UP,
         GRASS_SIDE,
+        LOG_UP,
+        LOG_SIDE,
         TYPE_COUNT,
         MIN_FACE = 0
     };
@@ -32,6 +34,9 @@ TEXTUREFILENAMES {{
     RESOURCES_PATH "stone.png",
     RESOURCES_PATH "grass_up.png",
     RESOURCES_PATH "grass_side.png",
+    RESOURCES_PATH "log_up.png",
+    RESOURCES_PATH "log_side.png"
+
 }};
 
 
@@ -45,6 +50,14 @@ MULTIFACEBLOCKS {
         {DIRECTION_WEST, FaceType::GRASS_SIDE},
         {DIRECTION_SOUTH, FaceType::GRASS_SIDE},
         {DIRECTION_DOWN, FaceType::DIRT}
+    }},
+    {BlockType::LOG, std::unordered_map<Direction, uint32_t>{
+        {DIRECTION_UP, FaceType::LOG_UP},
+        {DIRECTION_NORTH, FaceType::LOG_SIDE},
+        {DIRECTION_EAST, FaceType::LOG_SIDE},
+        {DIRECTION_WEST, FaceType::LOG_SIDE},
+        {DIRECTION_SOUTH, FaceType::LOG_SIDE},
+        {DIRECTION_DOWN, FaceType::LOG_UP}
     }}
 };
 

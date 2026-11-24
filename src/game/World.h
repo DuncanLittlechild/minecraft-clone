@@ -30,7 +30,7 @@ struct PairHash{
 struct World {
     // Int values in key are x and z coordinates respectively
     std::unordered_map<std::pair<int, int>, GameChunk, PairHash> chunks{};
-    std::vector<GameChunk*> dirtyChunks{};
+    std::deque<GameChunk*> dirtyChunks{};
     std::deque<std::pair<int, int>> chunkSpawnQueue{};
     int pChunkX {};
     int pChunkZ {};
