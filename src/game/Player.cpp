@@ -1,6 +1,6 @@
 #include "Player.h"
 #include "core/Matrix4x4.h"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 
 void Player::Init(EngineApi& api)
 {

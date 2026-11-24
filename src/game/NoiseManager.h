@@ -1,7 +1,7 @@
 #ifndef DL_SDL3GPU_PROJECT_TEMPLATE_NOISEMANAGER_H
 #define DL_SDL3GPU_PROJECT_TEMPLATE_NOISEMANAGER_H
 #include "FastNoiseSIMD.h"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include <memory>
 
 

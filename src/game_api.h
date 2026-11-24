@@ -1,7 +1,7 @@
 #ifndef DL_TEMPLATE_GAMEAPI_H
 #define DL_TEMPLATE_GAMEAPI_H
 #include "core/Matrix4x4.h"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include "imgui_internal.h"
 #include <cstddef>
 #include <cstdint>
@@ -19,9 +19,19 @@ enum Direction {
     DIRECTION_MIN = 0
 };
 
+enum DirectionBitflags {
+    DIRECTIONBITFLAG_NORTH  = 1 << DIRECTION_NORTH, // -z
+    DIRECTIONBITFLAG_SOUTH  = 1 << DIRECTION_SOUTH, // +z
+    DIRECTIONBITFLAG_EAST   = 1 << DIRECTION_EAST, // +x
+    DIRECTIONBITFLAG_WEST   = 1 << DIRECTION_WEST, // -x
+    DIRECTIONBITFLAG_UP     = 1 << DIRECTION_UP, // +y
+    DIRECTIONBITFLAG_DOWN   = 1 << DIRECTION_DOWN,  // -y
+    DIRECTIONBITFLAG_COUNT
+};
+
 
 namespace BlockType{
-    enum Type : uint32_t {
+    enum Type : uint8_t {
         DIRT,
         SAND,
         STONE,
@@ -35,25 +45,21 @@ namespace BlockType{
 
 using Block = BlockType::Type;
 
+struct BlockTransfer {
+    Block type {BlockType::NOBLOCK};
+    uint8_t faces{0};
+};
+
+struct ChunkTransfer {
+    BlockTransfer main[CHUNKX][CHUNKY][CHUNKZ];
+    int xPos{0};
+    int zPos{0};
+    int handle{0};
+    bool active{false};
+};
+
 struct EngineApi {
-    int (*GetChunkHandle)(
-        Block main[CHUNKX][CHUNKY][CHUNKZ], 
-        Block n[CHUNKX][CHUNKY][CHUNKZ], 
-        Block s[CHUNKX][CHUNKY][CHUNKZ], 
-        Block e[CHUNKX][CHUNKY][CHUNKZ], 
-        Block w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ
-    );
     void (*DrawChunk)(int);
-    void (*RerenderChunk)(
-        Block main[CHUNKX][CHUNKY][CHUNKZ], 
-        Block n[CHUNKX][CHUNKY][CHUNKZ], 
-        Block s[CHUNKX][CHUNKY][CHUNKZ], 
-        Block e[CHUNKX][CHUNKY][CHUNKZ], 
-        Block w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ,
-        int handle
-    );
     // MUST be called before game start, as also initialises camera matrices
     void (*SyncCameraToPlayer)(const Matrix4x4&);
     void (*ToggleRelativeMouse)();
@@ -87,7 +93,12 @@ struct UserInput {
     float mYRel{.0f};
 };
 
+struct GameState;
+
 struct GameMemory {
+    ChunkTransfer* chunkGen{nullptr};
+    ChunkTransfer* chunkRegen{nullptr};
+    GameState* state{nullptr};
     int seed {5};
     std::size_t gameDataSize{0};
     void* gameData{nullptr};

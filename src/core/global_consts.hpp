@@ -8,7 +8,8 @@
 // third is for local function static variables, which are store din static memory
 #define LOCAL static
 #define SHARED static
-#define STATIC static
+#define LOCAL_PERSIST static
+#define GLOBAL static
 
 // These values are used to calculate chunk size.
 // they must all be powers of 2
@@ -17,6 +18,10 @@ constexpr uint16_t CHUNKX {16};
 constexpr uint16_t CHUNKY {256};
 constexpr uint16_t CHUNKZ {16};
 constexpr uint32_t CHUNKMAXBLOCKS {CHUNKY * CHUNKX * CHUNKZ};
+constexpr uint16_t Z_MAXIDX {CHUNKZ - 1};
+constexpr uint16_t X_MAXIDX {CHUNKX - 1};
+constexpr uint16_t Y_MAXIDX {CHUNKY - 1};
+
 
 static_assert(CHUNKX == CHUNKZ);
 

@@ -4,7 +4,7 @@
 #include "SDL3/SDL_hints.h"
 #include "asset_manager/meshes.h"
 #include "core/Matrix4x4.h"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include "game_api.h"
 #include "imgui/dl_imgui_backend.h"
 #include "imgui_internal.h"
@@ -155,7 +155,7 @@ void Renderer::RenderGame(ImGuiContext* context)
     /* PREPARE INFO STRUCTS*/
     SDL_GPUColorTargetInfo targetInfo {
         .texture = g_swapchainTexture,
-        .clear_color = SDL_FColor{.0f, .0f, .0f, 1.0f},
+        .clear_color = SDL_FColor{.0f, .0f, .8f, 1.0f},
         .load_op = SDL_GPU_LOADOP_CLEAR,
         .store_op = SDL_GPU_STOREOP_STORE,
     };
@@ -196,31 +196,6 @@ void Renderer::RenderGame(ImGuiContext* context)
 
 SDL_GPUDevice* Renderer::GetGPURenderingDevice() { return g_renderDevice; }
 Camera3d* Renderer::GetGameCamera() { return &g_camera; }
-
-int Renderer::GetChunkHandle(
-        Block main[CHUNKX][CHUNKY][CHUNKZ], 
-        Block n[CHUNKX][CHUNKY][CHUNKZ], 
-        Block s[CHUNKX][CHUNKY][CHUNKZ], 
-        Block e[CHUNKX][CHUNKY][CHUNKZ], 
-        Block w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ
-    )
-{
-    return g_assetManager.CreateGPUChunk(g_renderDevice, main, n, s, e, w, cX, cZ);
-}
-
-void Renderer::RerenderChunk(
-        BlockType::Type main[CHUNKX][CHUNKY][CHUNKZ], 
-        BlockType::Type n[CHUNKX][CHUNKY][CHUNKZ], 
-        BlockType::Type s[CHUNKX][CHUNKY][CHUNKZ], 
-        BlockType::Type e[CHUNKX][CHUNKY][CHUNKZ], 
-        BlockType::Type w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ,
-        int handle
-    )
-{
-    g_assetManager.RecreateGPUChunk(g_renderDevice, main, n, s, e, w, cX, cZ, handle);
-}
 
 void SyncCameraToPlayer(const Matrix4x4& viewMat)
 {

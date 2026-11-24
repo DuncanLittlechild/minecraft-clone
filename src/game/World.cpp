@@ -1,7 +1,7 @@
 #include "World.h"
 #include "GameChunk.h"
 #include "core/Matrix4x4.h"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include "game_api.h"
 #include "imgui_global.h"
 #include <array>
@@ -209,76 +209,101 @@ void World::MarkExistingNeighboursDirtyBlock(int gX, int gZ)
     }
 }
 
-LOCAL void GetChunkNeighbours(int x, int z,
+void World::GetChunkNeighbours(int x, int z,
     GameChunk** n,
     GameChunk** s,
     GameChunk** e,
-    GameChunk** w,
-    World& world)
+    GameChunk** w)
 {
     // Get chunks to the north, south, east and west if they exist
-    *n = world.GetChunkSafe(x + CHUNKOFFSET[DIRECTION_NORTH][0], z + CHUNKOFFSET[DIRECTION_NORTH][1]);
-    *s = world.GetChunkSafe(x + CHUNKOFFSET[DIRECTION_SOUTH][0], z + CHUNKOFFSET[DIRECTION_SOUTH][1]);
-    *e = world.GetChunkSafe(x + CHUNKOFFSET[DIRECTION_EAST][0], z + CHUNKOFFSET[DIRECTION_EAST][1]);
-    *w  = world.GetChunkSafe(x + CHUNKOFFSET[DIRECTION_WEST][0], z + CHUNKOFFSET[DIRECTION_WEST][1]);
+    *n = GetChunkSafe(x + CHUNKOFFSET[DIRECTION_NORTH][0], z + CHUNKOFFSET[DIRECTION_NORTH][1]);
+    *s = GetChunkSafe(x + CHUNKOFFSET[DIRECTION_SOUTH][0], z + CHUNKOFFSET[DIRECTION_SOUTH][1]);
+    *e = GetChunkSafe(x + CHUNKOFFSET[DIRECTION_EAST][0], z + CHUNKOFFSET[DIRECTION_EAST][1]);
+    *w  = GetChunkSafe(x + CHUNKOFFSET[DIRECTION_WEST][0], z + CHUNKOFFSET[DIRECTION_WEST][1]);
 }
 
-void World::RecreateChunk(int x, int z, int handle, EngineApi& api)
+void World::TransferChunk(ChunkTransfer* cTransfer, int xPos, int zPos)
 {
-    // Rounds to the nearest multiple of 16
-    x &= CHUNKPOSMASK;
-    z &= CHUNKPOSMASK;
-    GameChunk *n, *s, *e, *w;
-    GetChunkNeighbours(x, z, &n, &s, &e, &w, *this);
+    cTransfer->xPos = xPos;
+    cTransfer->zPos = zPos;
+    cTransfer->active = true;
 
-    // Check to see if the returned values are null before creating the chunk
-    api.RerenderChunk(
-        chunks[{x,z}].blocks,
-        n != nullptr ? n->blocks : nullptr,
-        s != nullptr ? s->blocks : nullptr,
-        e != nullptr ? e->blocks : nullptr,
-        w != nullptr ? w->blocks : nullptr,
-        x,z,
-        handle
-    );
+    GameChunk *main, *n, *s, *e, *w;
+    main = GetChunkSafe(xPos, zPos);
+    GetChunkNeighbours(xPos, zPos, &n, &s, &e, &w);
+
+    for(int x {0}; x < CHUNKX; ++x)
+    {
+        for (int y {0}; y < CHUNKY; ++y)
+        {
+            for (int z{0}; z < CHUNKZ; ++z)
+            {
+                const Block& b {main->blocks[x][y][z]};
+                BlockTransfer& bT {cTransfer->main[x][y][z]};
+                bT.faces = 0;
+                bT.type = b;
+                if(bT.type == BlockType::NOBLOCK)
+                    continue;
+
+                if(z == 0)
+                {
+                    if(n && !n->blocks[x][y][Z_MAXIDX])
+                        bT.faces |= DIRECTIONBITFLAG_NORTH;
+                }
+                else if (z == Z_MAXIDX)
+                {
+                    if(s && !s->blocks[x][y][0])
+                        bT.faces |= DIRECTIONBITFLAG_SOUTH;
+                }
+                else if(main->blocks[x][y][z - 1])
+                    bT.faces |= DIRECTIONBITFLAG_NORTH;
+                else if(main->blocks[x][y][z + 1])
+                    bT.faces |= DIRECTIONBITFLAG_SOUTH;
+
+                if(x == 0)
+                {
+                    if(w && !w->blocks[X_MAXIDX][y][z])
+                        bT.faces |= DIRECTIONBITFLAG_WEST;
+                }
+                else if (x == X_MAXIDX)
+                {
+                    if(e && !e->blocks[0][y][z])
+                        bT.faces |= DIRECTIONBITFLAG_EAST;
+                }
+                else if(main->blocks[x - 1][y][z])
+                    bT.faces |= DIRECTIONBITFLAG_WEST;
+                else if(main->blocks[x + 1][y][z])
+                    bT.faces |= DIRECTIONBITFLAG_EAST;
+
+                if (y == Y_MAXIDX)
+                {
+                    bT.faces |= DIRECTIONBITFLAG_UP;
+                }
+                else if(main->blocks[x][y + 1][z])
+                    bT.faces |= DIRECTIONBITFLAG_UP;
+                else if(main->blocks[x][y - 1][z])
+                    bT.faces |= DIRECTIONBITFLAG_DOWN;
+            }
+        }
+    }
 }
 
-void World::CreateChunk(int x, int z, EngineApi& api)
-{
-    // Rounds to the nearest multiple of 16
-    GetChunkKeys(x, z);
-
-    float chunkNoise[CHUNKX*CHUNKZ];
-    noiseManager.SetBufferToChunkSIMDMap(chunkNoise, x, z);
-    chunks[{x,z}] = GameChunk{};
-    chunks[{x,z}].Init(x, z, chunkNoise);
-    // Get neighbours to the current chunk
-    GameChunk *n, *s, *e, *w;
-    GetChunkNeighbours(x, z, &n, &s, &e, &w, *this);
-    // Check to see if the returned values are null before creating the chunk
-    chunks[{x,z}].handle = api.GetChunkHandle(
-        chunks[{x,z}].blocks,
-        n != nullptr ? n->blocks : nullptr,
-        s != nullptr ? s->blocks : nullptr,
-        e != nullptr ? e->blocks : nullptr,
-        w != nullptr ? w->blocks : nullptr,
-        x,z
-    );
-
-    // Mark neighbouring chunks as dirty, if they exist
-    MarkExistingNeighboursDirtyChunk(x, z);
-}
-
-void World::Update(EngineApi& api)
+void World::Update(ChunkTransfer* gen, ChunkTransfer* regen)
 {
     if(chunkSpawnQueue.size() > 0)
     {
-        CreateChunk(chunkSpawnQueue[0].first, chunkSpawnQueue[0].second, api);
+        std::pair<int,int>* chunk {&chunkSpawnQueue[0]};
+        gen->handle = GetChunkHandle();
+        gen->active = true;
+        TransferChunk(gen, chunk->first, chunk->second);
         chunkSpawnQueue.pop_front();
     }  
     if (HasDirtyChunks())
     {
-        RecreateChunk(dirtyChunks[0]->x, dirtyChunks[0]->z, dirtyChunks[0]->handle, api);
+        GameChunk* chunk {dirtyChunks[0]};
+        regen->handle = chunk->handle;
+        regen->active = true;
+        TransferChunk(regen, chunk->x, chunk->z);
         dirtyChunks.pop_front();
     }  
 }

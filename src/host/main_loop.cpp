@@ -1,11 +1,12 @@
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_video.h"
+#include "asset_manager/AssetManager.h"
 #include <SDL3/SDL.h>
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL_main.h>
 
 #include "game_api.h"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include "core/dl_rand.hpp"
 #include "renderer/renderer.h"
 #include "imgui/dl_imgui_backend.h"
@@ -36,9 +37,7 @@ void ToggleRelativeMouse()
 
 void InitEngineApi()
 {
-    g_engineApi.GetChunkHandle = Renderer::GetChunkHandle;
     g_engineApi.DrawChunk = Renderer::DrawChunk;
-    g_engineApi.RerenderChunk = Renderer::RerenderChunk;
     g_engineApi.SyncCameraToPlayer = SyncCameraToPlayer;
     g_engineApi.ToggleRelativeMouse = ToggleRelativeMouse;
 }
@@ -94,6 +93,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     Imgui_Backend::Init(Renderer::GetGPURenderingDevice(), g_window);
 
     GameInitFn(g_gameMemory, g_engineApi);
+
+    g_gameMemory.chunkGen = new ChunkTransfer{};
+    g_gameMemory.chunkRegen = new ChunkTransfer{};
 
    // DL_Rand::Init(DL_Rand::SET, g_gameMemory.seed);
 

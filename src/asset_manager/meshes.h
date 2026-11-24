@@ -30,6 +30,8 @@ namespace CubeFace {
         DIRECTION_DOWN
     }};
 
+
+
     constexpr std::array<int[3], DIRECTION_MAX> FACEDIRS {{
         {0,0,-1},
         {0,0,1},

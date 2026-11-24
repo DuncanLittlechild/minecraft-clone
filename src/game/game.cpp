@@ -12,15 +12,6 @@ std::size_t GetGameDataSizeFn() { return sizeof(GameData); }
 
 bool menuMode {true};
 
-void RerenderDirtyChunks(World& world, EngineApi& api)
-{
-    for (auto& chunk : world.dirtyChunks)
-    {
-        world.RecreateChunk(chunk->x, chunk->z, chunk->handle, api);
-    }
-}
-
-
 void UpdateSettings(UserInput& input, EngineApi& api)
 {
     if(input.keys & UserInput::R_PRESSED)
@@ -99,7 +90,6 @@ void PopulateChunks(Player& player, World& world, EngineApi& api)
 void UpdateGame(UserInput& input, Player& player, World& world, float deltaTime, EngineApi& api)
 {
     UpdatePlayer(input, player, deltaTime, api);
-    world.Update(api);
     UpdateSettings(input, api);
     if(player.xPlayerChunk != player.xPrevPlayerChunk || player.zPlayerChunk != player.zPrevPlayerChunk)
     {
@@ -142,6 +132,7 @@ void GameUpdateFn(GameMemory& memory, EngineApi& api, UserInput& input, float de
 {
     GameData* data {reinterpret_cast<GameData*>(memory.gameData)};
     UpdateGame(input, data->player, data->world, deltaTime, api);
+    data->world.Update(memory.chunkGen, memory.chunkRegen);
     
     if(!skipRender)
         RenderGame(data->world, api);

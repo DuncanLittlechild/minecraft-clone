@@ -1,6 +1,6 @@
 #include "GameChunk.h"
 #include "core/dl_rand.hpp"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include "game_api.h"
 // Tree generation rules
 void GameChunk::Init(int cX, int cZ, float* noiseMap)

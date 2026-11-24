@@ -27,27 +27,15 @@ struct AssetManager {
     SDL_GPUBuffer* instanceBuffer{nullptr};
     SDL_GPUTransferBuffer* instanceTransferBuffer{nullptr};
 
+    SHARED int GetHandle()
+    {
+        static int handleCount{0};
+        return handleCount++;
+    }
+
     void Load(SDL_GPUDevice*, SDL_Window*);
     void RecreateDepthTexture(SDL_GPUDevice*, SDL_Window*);
-    int CreateGPUChunk(
-        SDL_GPUDevice*,
-        Block main[CHUNKX][CHUNKY][CHUNKZ], 
-        Block n[CHUNKX][CHUNKY][CHUNKZ], 
-        Block s[CHUNKX][CHUNKY][CHUNKZ], 
-        Block e[CHUNKX][CHUNKY][CHUNKZ], 
-        Block w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ
-    );
-    void RecreateGPUChunk(
-        SDL_GPUDevice*, 
-        Block main[CHUNKX][CHUNKY][CHUNKZ], 
-        Block n[CHUNKX][CHUNKY][CHUNKZ], 
-        Block s[CHUNKX][CHUNKY][CHUNKZ], 
-        Block e[CHUNKX][CHUNKY][CHUNKZ], 
-        Block w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ,
-        int handle
-    );
+    void GenerateGPUChunk(SDL_GPUDevice*, ChunkTransfer*);
     //void UploadToInstanceBuffer();
 };
 

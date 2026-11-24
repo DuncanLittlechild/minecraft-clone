@@ -1,6 +1,6 @@
 #include "game_init.h"
 #include "World.h"
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include "game/GameData.h"
 void InitialPopulateChunk(Player& player, World& world, EngineApi& api)
 {

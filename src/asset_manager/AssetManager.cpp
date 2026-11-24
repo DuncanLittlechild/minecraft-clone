@@ -4,8 +4,21 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "asset_manager/create_gpu_assets.h"
+#include "asset_manager/Vertex.h"
+#include "core/global_consts.hpp"
 #include "game_api.h"
 #include "meshes.h"
+
+GLOBAL Mesh G_MESH {};
+
+constexpr std::array<DirectionBitflags, DIRECTIONBITFLAG_COUNT> FACEFLAGS {{
+    DIRECTIONBITFLAG_NORTH,
+    DIRECTIONBITFLAG_SOUTH,
+    DIRECTIONBITFLAG_EAST,
+    DIRECTIONBITFLAG_WEST,
+    DIRECTIONBITFLAG_UP,
+    DIRECTIONBITFLAG_DOWN
+}};
 
 void AssetManager::Load(SDL_GPUDevice* device, SDL_Window* window)
 {
@@ -16,6 +29,9 @@ void AssetManager::Load(SDL_GPUDevice* device, SDL_Window* window)
     GPU_Create::TextureArray(device, &textureArray);
 
     GPU_Create::Sampler(&sampler, device);
+
+    G_MESH.vertices.reserve(4 * 6 * CHUNKMAXBLOCKS);
+    G_MESH.indices.reserve(4 * 9 * CHUNKMAXBLOCKS);
 
     //GPU_Create::InstanceBufferAndTransferBuffer(device, &instanceBuffer, &instanceTransferBuffer);
 }
@@ -31,138 +47,63 @@ void AssetManager::RecreateDepthTexture(SDL_GPUDevice* device, SDL_Window* windo
     GPU_Create::DepthTexture(device, &depthTexture, w, h);
 }
 
-LOCAL void CreateChunkMesh(
-        Block main[CHUNKX][CHUNKY][CHUNKZ], 
-        Block n[CHUNKX][CHUNKY][CHUNKZ], 
-        Block s[CHUNKX][CHUNKY][CHUNKZ], 
-        Block e[CHUNKX][CHUNKY][CHUNKZ], 
-        Block w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ,
-        Mesh& cMesh
-    )
+LOCAL void GenerateGlobalChunkMesh(ChunkTransfer* cTransfer)
 {
-    // Modifies an inputted cube mesh to be in the position determined by both
-    // the chunk's position and the cubes position within the chunk
-    auto ModifyFaceMesh {[cX, cZ](Mesh& mesh, int meshCount, Block bType, Direction face, int x, int y, int z){
-        int textureIndex {};
-        if(MULTIFACEBLOCKS.contains(bType))
-            textureIndex = static_cast<int>(MULTIFACEBLOCKS.at(bType).at(face));
-        else
-            textureIndex = static_cast<int>(bType);
-        std::size_t indexInc {mesh.vertices.size() * meshCount};
-        for(auto& vert : mesh.vertices)
-        {
-            vert.x += x + cX;
-            vert.y += y;
-            vert.z += z + cZ;
-            vert.d = textureIndex;
-        }
-
-        for(auto& ind : mesh.indices)
-        {
-            ind += indexInc;
-        }
-    }};
-
+    G_MESH.vertices.clear();
+    G_MESH.indices.clear();
 
     int meshCount {0};
+    int cX {cTransfer->xPos};
+    int cZ {cTransfer->zPos};
     for(int x {0}; x < CHUNKX; ++x)
     {
-        for (int y{0}; y < CHUNKY; ++y)
+        for (int y {0}; y < CHUNKY; ++y)
         {
             for (int z {0}; z < CHUNKZ; ++z)
             {
-                Block bType {main[x][y][z]};
-                if (bType == BlockType::NOBLOCK)
-                  continue;
-                // Iterate over the faces for a block
-                // if the position is not off the side of the chunk, or the block at that position is solid, do not use
-                // as part of the mesh
-                for (auto& face : CubeFace::FACES)
+                BlockTransfer& bT {cTransfer->main[x][y][z]};
+                if(!bT.type)
+                    continue;
+
+                for(auto face : CubeFace::FACES)
                 {
-                    // Get the block facing that face of the current block, if it exists
-                    int nPos[3] {x + CubeFace::FACEDIRS[face][0], y + CubeFace::FACEDIRS[face][1], z + CubeFace::FACEDIRS[face][2]};
-                    // If the block borders another chunk, check the relevant coordinates of that chunk
-                    if(nPos[0] < 0)
-                    { 
-                        if(w != nullptr 
-                            && w[CHUNKX - 1][y][z] != BlockType::NOBLOCK)
-                            continue;
-                    }
-                    else if(nPos[0] >= CHUNKX)
-                    {
-                        if (e != nullptr
-                            && e[0][y][z] != BlockType::NOBLOCK)
-                            continue;
-                    }
-                    else if(nPos[2] < 0)
-                    {
-                        if(n != nullptr
-                            && n[x][y][CHUNKZ - 1] != BlockType::NOBLOCK)
-                            continue;
-                    }
-                    else if(nPos[2] >= CHUNKZ)
-                    {
-                        if(s != nullptr
-                           && s[x][y][0] != BlockType::NOBLOCK)
-                            continue;
-                    }
-                    
-                    if(nPos[0] >= 0 && nPos[0] < CHUNKX && nPos[1] >= 0 && nPos[1] < CHUNKY && nPos[2] >= 0 && nPos[2] < CHUNKZ && main[nPos[0]][nPos[1]][nPos[2]] != BlockType::NOBLOCK )
+                    if(!(bT.faces & ~(1<<face)))
                         continue;
-                    // If the face is visible, modify it and add it to cMesh.
-                    Mesh tmp{
-                        .vertices {CUBEVERTICES[face].begin(), CUBEVERTICES[face].end()},
-                        .indices {CUBEFACEINDICES.begin(), CUBEFACEINDICES.end()}
-                    };
-                    ModifyFaceMesh(tmp, meshCount++, bType, face, x, y, z);
-                    cMesh.vertices.append_range(tmp.vertices);
-                    cMesh.indices.append_range(tmp.indices);       
+                    int textureIndex {};
+                    if(MULTIFACEBLOCKS.contains(bT.type))
+                        textureIndex = static_cast<int>(MULTIFACEBLOCKS.at(bT.type).at(face));
+                    else
+                        textureIndex = static_cast<int>(bT.type);
+                    std::size_t indexInc {CUBEVERTICES.size() * meshCount++};
+
+                    for(auto& vert : CUBEVERTICES[face])
+                    {
+                        Vertex tmpV {vert};
+                        tmpV.x += x + cX;
+                        tmpV.y += y;
+                        tmpV.z += z + cZ;
+                        tmpV.d = textureIndex;
+                        G_MESH.vertices.push_back(tmpV);
+                    }
+                    for(auto idx : CUBEFACEINDICES)
+                    {
+                        G_MESH.indices.push_back(idx + indexInc);
+                    }
                 }
             }
         }
     }
 }
 
-int AssetManager::CreateGPUChunk(
+void AssetManager::GenerateGPUChunk(
     SDL_GPUDevice* device,
-    Block main[CHUNKX][CHUNKY][CHUNKZ], 
-    Block n[CHUNKX][CHUNKY][CHUNKZ], 
-    Block s[CHUNKX][CHUNKY][CHUNKZ], 
-    Block e[CHUNKX][CHUNKY][CHUNKZ], 
-    Block w[CHUNKX][CHUNKY][CHUNKZ], 
-    int cX, int cZ
+    ChunkTransfer* cTransfer
     )
 {
-    // Gets a unique handle
-    // NOTE: too many chunks could theoretically fuck this up
-    auto GetNewChunkHandle {[](){
-        static int handleCount{0};
-        return handleCount++;
-    }};
-    Mesh cMesh{};
-    CreateChunkMesh(main, n, s, e, w, cX, cZ, cMesh);
-    int handle {GetNewChunkHandle()};
-    chunks[handle] = GPUMesh{};
-    chunks[handle].UploadToGPU(device, cMesh);
-    return handle;
-}
-
-void AssetManager::RecreateGPUChunk(
-    SDL_GPUDevice* device,
-        Block main[CHUNKX][CHUNKY][CHUNKZ], 
-        Block n[CHUNKX][CHUNKY][CHUNKZ], 
-        Block s[CHUNKX][CHUNKY][CHUNKZ], 
-        Block e[CHUNKX][CHUNKY][CHUNKZ], 
-        Block w[CHUNKX][CHUNKY][CHUNKZ], 
-        int cX, int cZ,
-        int handle
-    )
-{
-    Mesh cMesh{};
-    CreateChunkMesh(main, n, s, e, w, cX, cZ, cMesh);
+    GenerateGlobalChunkMesh(cTransfer);
+    int handle {cTransfer->handle};
     chunks[handle].Clear(device);
-    chunks[handle].UploadToGPU(device, cMesh); 
+    chunks[handle].UploadToGPU(device, G_MESH);
 }
 
 

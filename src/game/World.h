@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include "NoiseManager.h"
+#include "core/global_consts.hpp"
 #include "game_api.h"
 #include "game/GameChunk.h"
 #include "core/Matrix4x4.h"
@@ -52,17 +53,34 @@ struct World {
 
     void PlaceBlockUnsafe(const Vector3&, Block);
 
+    // Outputs the neighbours of a particular chunk in the cardinal direction 
+    // indicated by the variable name. If there is no chunk in that 
+    // direction, returns nullptr
+    void GetChunkNeighbours(
+        int x, int z,
+        GameChunk** n,
+        GameChunk** s,
+        GameChunk** e,
+        GameChunk** w
+    );
+
     void MarkExistingNeighboursDirtyChunk(int, int);
     void MarkExistingNeighboursDirtyBlock(int, int);
-    void RecreateChunk(int, int, int, EngineApi&);
-    void CreateChunk(int, int, EngineApi&);
 
+    // Generates the data needed to transfer a chunk from the game back to the 
+    // renderer
+    void TransferChunk(ChunkTransfer*, int, int);
     void ProcessSpawnQueue();
 
-    void Update(EngineApi&);
+    void Update(ChunkTransfer*, ChunkTransfer*);
 
     bool HasDirtyChunks() { return dirtyChunks.size() != 0; }
     void ClearDirtyChunks() { dirtyChunks.resize(0); }
+    SHARED int GetChunkHandle()
+    {
+        LOCAL_PERSIST int handleCount{0};
+        return handleCount++;
+    }
 };
 
 #endif // DL_SDL3GPU_PROJECT_TEMPLATE_WORLD_H

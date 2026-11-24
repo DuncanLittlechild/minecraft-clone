@@ -5,7 +5,7 @@
 #include "SDL3/SDL_surface.h"
 #include <cstdio>
 #include <filesystem>
-#include "core/global_consts.h"
+#include "core/global_consts.hpp"
 #include "game_api.h"
 #include "asset_manager/stb_utils.h"
 #include "asset_manager/Vertex.h"
