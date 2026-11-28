@@ -1,7 +1,6 @@
 #ifndef DL_SDLGPU_MATRICES_H
 #define DL_SDLGPU_MATRICES_H
-
-#include "SDL3/SDL.h"
+#include <cmath>
 // Matrix Math
 typedef struct Matrix4x4
 {
@@ -64,7 +63,7 @@ inline Vector3 operator*(float scal, const Vector3& vec)
 
 inline Vector3 Vector3_Normalize(Vector3 vec)
 {
-	float magnitude = SDL_sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
+	float magnitude = std::sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
 	return (Vector3) {
 		vec.x / magnitude,
 		vec.y / magnitude,
@@ -193,8 +192,8 @@ inline Matrix4x4 Matrix4x4_Multiply(const Matrix4x4& matrix1, const Matrix4x4& m
 inline Matrix4x4 Matrix4x4_CreateRotationZ(float radians)
 {
 	return (Matrix4x4) {
-		 SDL_cosf(radians), SDL_sinf(radians), 0, 0,
-		-SDL_sinf(radians), SDL_cosf(radians), 0, 0,
+		 std::cosf(radians), std::sinf(radians), 0, 0,
+		-std::sinf(radians), std::cosf(radians), 0, 0,
 						 0, 				0, 1, 0,
 						 0,					0, 0, 1
 	};
@@ -232,7 +231,7 @@ inline Matrix4x4 Matrix4x4_CreateProjectionMatrix(
 	float nearPlaneDistance,
 	float farPlaneDistance
 ) {
-	float num = 1.0f / ((float) SDL_tanf(fieldOfView * 0.5f));
+	float num = 1.0f / ((float) std::tanf(fieldOfView * 0.5f));
 	return (Matrix4x4) {
 		num / aspectRatio, 0, 0, 0,
 		0, num, 0, 0,

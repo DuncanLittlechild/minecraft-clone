@@ -11,13 +11,15 @@ set(PRODUCTION_BUILD OFF CACHE BOOL "Make this a production build" FORCE)
 # Statically links the c and c++ runtime libraries. This is needed for game development, if the binaries
 # are to be distributed on windows, as dynamically linking the c and c++ runtime libraries is sketchy and
 # very version dependent on windows.
-if(MSVC)
-       set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
-       set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-       add_compile_options(/arch:AVX2) # Ensures SIMD optimizations. Remove if triggers errors on apple device
-else()
-       add_link_options(-static-libstdc++ -static-libgcc)
-       add_compile_options(-mavx2 -mfma) # Ensures SIMD optimizations. Remove if triggers errors on apple device
+if(PRODUCTION_BUILD)
+       if(MSVC)
+              set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+              set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+              add_compile_options(/arch:AVX2) # Ensures SIMD optimizations. Remove if triggers errors on apple device
+       else()
+              add_link_options(-static-libstdc++ -static-libgcc)
+              add_compile_options(-mavx2 -mfma) # Ensures SIMD optimizations. Remove if triggers errors on apple device
+       endif()
 endif()
 
 
@@ -38,9 +40,9 @@ set(SDLTTF_PLUTOSVG OFF CACHE BOOL "Disables the plutosvg external dependency" F
 set(SDLTTF_PLUTOVG OFF CACHE BOOL "Disables the plutovg external dependency" FORCE)
 set(SDLTTF_HARFBUZZ OFF CACHE BOOL "Disables the Harfbuzz external dependency" FORCE)
 
-######################
-##### LIBRARIES ######
-######################
+#################################
+##### EXECUTABLE LIBRARIES ######
+#################################
 
 # -- Add Libraries --
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL3-3.4.12)
@@ -48,9 +50,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL3_ttf-3.2.2)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb_image)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/FastNoiseSIMD-0.7)
 
+
 # AS imgui has no cmake, it must be compiled and statically linked manually
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui")
-add_library(imgui_lib STATIC
+add_library(imgui_lib SHARED
        ${IMGUI_DIR}/imgui.cpp
        ${IMGUI_DIR}/imgui_draw.cpp
        ${IMGUI_DIR}/imgui_demo.cpp
@@ -70,20 +73,57 @@ target_link_libraries(imgui_lib PUBLIC SDL3::SDL3)
 add_library(stb_header INTERFACE)
 target_include_directories(stb_header INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb/")
 
+###########################
+##### GAME LIBRARIES ######
+###########################
+
 ########################################
 ##### EXECUTABLE INCLUDES AND SRC ######
 ########################################
 
 # --- Your executable ---
-#Bundles togetehr all cpp files in src recursively, so they can be added as an executable all as one
-file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+# Bundles togetehr all non-game  cpp files in src recursively, so they can be added as an executable all as one
+
+file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS 
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/game/*.cpp"
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cpp"
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/imgui/dl_imgui_frontend.cpp"
+       )
+add_library(game SHARED
+       "${LIB_SOURCES}"
+)
+target_include_directories(game PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+target_link_libraries(game PUBLIC
+       fastNoiseSIMD
+       imgui_lib
+)
+
+file(GLOB_RECURSE EXE_SOURCES CONFIGURE_DEPENDS 
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/asset_manager/*.cpp"
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cpp"
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/host/*.cpp"
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/*.cpp"
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/imgui/dl_imgui_backend.cpp"
+
+       )
+
 add_executable(${CMAKE_PROJECT_NAME}
-    "${MY_SOURCES}"
+    "${EXE_SOURCES}"
 )
 
 # -- Include headers --
 #Path for include headers
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+
+# -- Final linking step --
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+       SDL3::SDL3
+       SDL3_ttf::SDL3_ttf
+       stb_header
+       stb_image
+       game
+       imgui_lib
+)
 
 
 ####################################
@@ -168,12 +208,4 @@ compile_shaders()
 ##### LINKING ######
 ####################
 
-# -- Final linking step --
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
-        SDL3::SDL3
-        SDL3_ttf::SDL3_ttf
-        imgui_lib
-        fastNoiseSIMD
-        stb_header
-        stb_image
-)
+

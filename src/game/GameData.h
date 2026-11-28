@@ -2,7 +2,7 @@
 #define DL_TEMPLATE_GAMEDATA_H
 #include "GameChunk.h"
 #include "Player.h"
-#include "core/Matrix4x4.h"
+#include "core/Matrix4x4.hpp"
 #include <unordered_map>
 #include "game/World.h"
 

@@ -1,6 +1,7 @@
 #ifndef DL_SDLGPU_CAMERA3D_H
 #define DL_SDLGPU_CAMERA3D_H
-#include "core/Matrix4x4.h"
+#include "SDL3/SDL_stdinc.h"
+#include "core/Matrix4x4.hpp"
 struct Camera3d{
 	float zRot {};
 

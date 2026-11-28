@@ -7,7 +7,7 @@
 #include "NoiseManager.h"
 #include "game_api.h"
 #include "game/GameChunk.h"
-#include "core/Matrix4x4.h"
+#include "core/Matrix4x4.hpp"
 
 // Finds the key for the chunk which the x and z coordinates are contained within
 void GetChunkKeys(int& x, int& z);

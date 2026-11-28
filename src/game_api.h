@@ -1,6 +1,6 @@
 #ifndef DL_TEMPLATE_GAMEAPI_H
 #define DL_TEMPLATE_GAMEAPI_H
-#include "core/Matrix4x4.h"
+#include "core/Matrix4x4.hpp"
 #include "core/global_consts.h"
 #include "imgui_internal.h"
 #include <cstddef>

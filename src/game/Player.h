@@ -1,7 +1,7 @@
 #ifndef DL_SDL3GPU_PROJECT_TEMPLATE_PLAYER_H
 #define DL_SDL3GPU_PROJECT_TEMPLATE_PLAYER_H
 
-#include "core/Matrix4x4.h"
+#include "core/Matrix4x4.hpp"
 #include "game_api.h"
 #include <cstdint>
 #include <algorithm>

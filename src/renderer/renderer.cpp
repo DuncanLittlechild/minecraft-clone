@@ -3,7 +3,7 @@
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_hints.h"
 #include "asset_manager/meshes.h"
-#include "core/Matrix4x4.h"
+#include "core/Matrix4x4.hpp"
 #include "core/global_consts.h"
 #include "game_api.h"
 #include "imgui/dl_imgui_backend.h"

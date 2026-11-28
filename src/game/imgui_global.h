@@ -4,7 +4,7 @@
 // to be deleted after testing
 // This is just to provide a place ot put globals which vcan touch any part of the game
 
-#include "core/Matrix4x4.h"
+#include "core/Matrix4x4.hpp"
 struct ImGuiGlobal{
     Vector3 lastRayStart{};
     Vector3 lastRayDir{};

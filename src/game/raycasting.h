@@ -2,7 +2,7 @@
 #define DL_SDL3GPU_PROJECT_TEMPLATE_RAYCASTING_H
 
 #include "SDL3/SDL_stdinc.h"
-#include "core/Matrix4x4.h"
+#include "core/Matrix4x4.hpp"
 #include "game/GameData.h"
 #include <optional>
 
